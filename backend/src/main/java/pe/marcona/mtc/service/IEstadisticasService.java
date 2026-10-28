@@ -13,3 +13,4 @@ public interface IEstadisticasService {
 
     Map<String, Object> obtenerAnalitica();
 }
+

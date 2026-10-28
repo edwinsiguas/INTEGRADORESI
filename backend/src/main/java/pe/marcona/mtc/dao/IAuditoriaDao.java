@@ -14,3 +14,4 @@ public interface IAuditoriaDao {
 
     List<Map<String, Object>> listarHistorial(Long idUsuario, String accion, String entidad, int limite, long desplazamiento);
 }
+

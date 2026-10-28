@@ -108,3 +108,4 @@ public class ExportacionDaoImpl implements IExportacionDao {
                 """ + condicionWhere + " ORDER BY p.created_at DESC", parametros.toArray());
     }
 }
+

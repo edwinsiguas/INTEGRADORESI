@@ -11,3 +11,4 @@ public interface IReporteService {
 
     byte[] generarExcel(ReportRequest peticion) throws IOException;
 }
+

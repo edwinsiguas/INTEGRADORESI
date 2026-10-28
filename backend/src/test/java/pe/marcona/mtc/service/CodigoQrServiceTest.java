@@ -30,3 +30,4 @@ class CodigoQrServiceTest {
         assertThat(codigoQrService.generarQrBase64(null)).isNull();
     }
 }
+

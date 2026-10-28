@@ -38,3 +38,4 @@ public class LimitePeticionesServiceImpl implements ILimitePeticionesService {
         limitePeticionesDao.registrarPeticion(ip, accion);
     }
 }
+

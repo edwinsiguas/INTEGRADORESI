@@ -16,3 +16,4 @@ public interface IExportacionDao {
 
     List<Map<String, Object>> consultarPermisosParaExportar(String condicionWhere, List<Object> parametros);
 }
+

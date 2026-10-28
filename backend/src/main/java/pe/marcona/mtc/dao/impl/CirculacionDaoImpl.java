@@ -103,3 +103,4 @@ public class CirculacionDaoImpl implements ICirculacionDao {
         return filas.isEmpty() ? Optional.empty() : Optional.of(filas.get(0));
     }
 }
+

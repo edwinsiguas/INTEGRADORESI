@@ -42,3 +42,4 @@ public class AutenticacionDaoImpl implements IAutenticacionDao {
         return filas.isEmpty() ? Optional.empty() : Optional.of(filas.get(0));
     }
 }
+

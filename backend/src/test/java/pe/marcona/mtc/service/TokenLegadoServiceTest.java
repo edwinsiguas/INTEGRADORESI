@@ -62,3 +62,4 @@ class TokenLegadoServiceTest {
         assertThat(encoder.matches("password-example", phpCompatibleHash)).isTrue();
     }
 }
+

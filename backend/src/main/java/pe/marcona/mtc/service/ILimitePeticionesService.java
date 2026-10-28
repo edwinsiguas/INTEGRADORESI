@@ -7,3 +7,4 @@ public interface ILimitePeticionesService {
 
     void verificar(String accion, String ip, int maximoPermitido, int segundosVentana);
 }
+

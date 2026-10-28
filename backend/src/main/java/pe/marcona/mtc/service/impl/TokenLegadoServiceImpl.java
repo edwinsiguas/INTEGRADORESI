@@ -108,3 +108,4 @@ public class TokenLegadoServiceImpl implements ITokenLegadoService {
         return mac.doFinal(contenido.getBytes(StandardCharsets.UTF_8));
     }
 }
+

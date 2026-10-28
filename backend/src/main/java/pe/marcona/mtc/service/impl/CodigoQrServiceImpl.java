@@ -46,3 +46,4 @@ public class CodigoQrServiceImpl implements ICodigoQrService {
         return generarQrBase64(texto, 250, 250);
     }
 }
+

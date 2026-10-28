@@ -45,3 +45,4 @@ public class LimitePeticionesDaoImpl implements ILimitePeticionesDao {
         jdbcTemplate.update(sql, ip, accion);
     }
 }
+

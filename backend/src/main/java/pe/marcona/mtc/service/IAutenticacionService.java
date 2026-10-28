@@ -19,3 +19,4 @@ public interface IAutenticacionService {
 
     Map<String, Object> requerirUsuarioEnRoles(HttpServletRequest solicitud, Set<String> rolesRequeridos);
 }
+

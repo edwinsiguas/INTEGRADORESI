@@ -115,3 +115,4 @@ public class CirculacionServiceImpl implements ICirculacionService {
         return valor == null ? "" : valor.toString().trim();
     }
 }
+

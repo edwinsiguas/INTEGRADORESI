@@ -12,3 +12,4 @@ public interface IAutenticacionDao {
 
     Optional<Map<String, Object>> obtenerUsuarioPorId(long id);
 }
+

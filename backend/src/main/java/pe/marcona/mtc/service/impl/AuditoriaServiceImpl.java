@@ -143,3 +143,4 @@ public class AuditoriaServiceImpl implements IAuditoriaService {
         return (valor == null || valor.isBlank()) ? null : valor.trim();
     }
 }
+

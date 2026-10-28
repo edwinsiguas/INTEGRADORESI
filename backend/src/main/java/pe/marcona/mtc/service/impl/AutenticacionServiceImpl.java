@@ -142,3 +142,4 @@ public class AutenticacionServiceImpl implements IAutenticacionService {
         return valor instanceof Number number && number.intValue() == 1;
     }
 }
+

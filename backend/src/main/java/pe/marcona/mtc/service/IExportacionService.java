@@ -16,3 +16,4 @@ public interface IExportacionService {
 
     List<Map<String, Object>> exportarPermisos(Map<String, String> consulta);
 }
+

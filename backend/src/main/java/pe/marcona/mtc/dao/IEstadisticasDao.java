@@ -42,3 +42,4 @@ public interface IEstadisticasDao {
 
     List<Map<String, Object>> obtenerRankingEmpresasFlota();
 }
+

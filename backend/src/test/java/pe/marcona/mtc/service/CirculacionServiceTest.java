@@ -37,3 +37,4 @@ class CirculacionServiceTest {
                 .containsEntry("data", null);
     }
 }
+

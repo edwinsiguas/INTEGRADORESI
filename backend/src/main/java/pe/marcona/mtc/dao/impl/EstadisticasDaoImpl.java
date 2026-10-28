@@ -177,3 +177,4 @@ public class EstadisticasDaoImpl implements IEstadisticasDao {
         return conteo == null ? 0L : conteo;
     }
 }
+
