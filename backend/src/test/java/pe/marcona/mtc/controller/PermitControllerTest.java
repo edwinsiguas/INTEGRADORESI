@@ -1,13 +1,15 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.CirculationService;
+import pe.marcona.mtc.service.IPermisoService;
+import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.List;
 import java.util.Map;
@@ -16,9 +18,7 @@ import java.util.Set;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,7 +28,7 @@ class PermitControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private PermitService permitService;
+    private IPermisoService permisoService;
     @MockitoBean
     private CirculationService circulationService;
     @MockitoBean
@@ -40,7 +40,7 @@ class PermitControllerTest {
     void listsPermitsForOperativeStaff() throws Exception {
         when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "operador"));
-        when(permitService.listPermits(any())).thenReturn(Map.of(
+        when(permisoService.listarPermisos(any())).thenReturn(Map.of(
                 "data", List.of(Map.of("id", 10, "numero_permiso", "PERM-2026-00001")),
                 "pagination", Map.of("total", 1, "page", 1, "pages", 1)));
 
@@ -54,7 +54,7 @@ class PermitControllerTest {
     void getsPermitById() throws Exception {
         when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
-        when(permitService.getPermitById(10L)).thenReturn(Map.of(
+        when(permisoService.obtenerPermisoPorId(10L)).thenReturn(Map.of(
                 "id", 10L,
                 "numero_permiso", "PERM-2026-00001",
                 "placa", "ABC-123"));
@@ -69,7 +69,7 @@ class PermitControllerTest {
     void generatesPermit() throws Exception {
         when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "operador"));
-        when(permitService.generatePermit(any(), eq(1L), any())).thenReturn(Map.of(
+        when(permisoService.generarPermiso(any(), eq(1L), any())).thenReturn(Map.of(
                 "id", 15L,
                 "numero_permiso", "PERM-2026-00002"));
 
@@ -85,7 +85,7 @@ class PermitControllerTest {
     void revokesPermit() throws Exception {
         when(authService.requireUser(any(), eq("admin")))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
-        when(permitService.revokePermit(eq(15L), any(), eq(1L), any())).thenReturn(true);
+        when(permisoService.revocarPermiso(eq(15L), any(), eq(1L), any())).thenReturn(true);
 
         mockMvc.perform(put("/api/permits/15/revoke")
                         .contentType(MediaType.APPLICATION_JSON)

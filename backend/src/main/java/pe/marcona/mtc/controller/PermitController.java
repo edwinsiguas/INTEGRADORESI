@@ -1,40 +1,39 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-import pe.marcona.mtc.dto.ApiResponse;
-import pe.marcona.mtc.exception.ApiException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import pe.marcona.mtc.dto.ApiResponse;
+import pe.marcona.mtc.exception.ApiException;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.CirculationService;
+import pe.marcona.mtc.service.IPermisoService;
+import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Adaptador REST para la consulta, emisión, revocación y renovación de permisos.
+ * Inyecta la abstracción {@link IPermisoService} respetando Inversión de Dependencias (DIP).
+ */
 @RestController
 @RequestMapping("/api/permits")
 public class PermitController {
-    private final PermitService permitService;
+
+    private final IPermisoService permisoService;
     private final CirculationService circulationService;
     private final AuthService authService;
     private final RateLimitService rateLimitService;
 
     public PermitController(
-            PermitService permitService,
+            IPermisoService permisoService,
             CirculationService circulationService,
             AuthService authService,
             RateLimitService rateLimitService) {
-        this.permitService = permitService;
+        this.permisoService = permisoService;
         this.circulationService = circulationService;
         this.authService = authService;
         this.rateLimitService = rateLimitService;
@@ -46,7 +45,7 @@ public class PermitController {
             HttpServletRequest request) {
         rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
         authService.requireUserInRoles(request, Set.of("admin", "operador"));
-        return ApiResponse.success(permitService.listPermits(query), null);
+        return ApiResponse.success(permisoService.listarPermisos(query), null);
     }
 
     @GetMapping("/{id}")
@@ -55,7 +54,7 @@ public class PermitController {
             HttpServletRequest request) {
         rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
         authService.requireUserInRoles(request, Set.of("admin", "operador"));
-        return ApiResponse.success(permitService.getPermitById(id), null);
+        return ApiResponse.success(permisoService.obtenerPermisoPorId(id), null);
     }
 
     @PostMapping
@@ -68,7 +67,7 @@ public class PermitController {
         long userId = ((Number) user.get("id")).longValue();
         Map<String, Object> input = body == null ? Map.of() : body;
         return ApiResponse.success(
-                permitService.generatePermit(input, userId, request),
+                permisoService.generarPermiso(input, userId, request),
                 "Permiso generado exitosamente");
     }
 
@@ -82,8 +81,8 @@ public class PermitController {
         long userId = ((Number) user.get("id")).longValue();
         String motivo = body == null ? null : (String) body.get("motivo");
 
-        boolean revoked = permitService.revokePermit(id, motivo, userId, request);
-        if (!revoked) {
+        boolean revocado = permisoService.revocarPermiso(id, motivo, userId, request);
+        if (!revocado) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Permiso no encontrado o ya no está vigente");
         }
         return ApiResponse.success(null, "Permiso revocado correctamente");
@@ -101,7 +100,7 @@ public class PermitController {
         Map<String, Object> input = body == null ? Map.of() : body;
 
         return ApiResponse.success(
-                permitService.renewPermit(id, input, userId, request),
+                permisoService.renovarPermiso(id, input, userId, request),
                 "Permiso renovado exitosamente");
     }
 
@@ -132,7 +131,7 @@ public class PermitController {
         if (id <= 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "vehicle_id inválido");
         }
-        return ApiResponse.success(permitService.getVehicleImages(id), null);
+        return ApiResponse.success(permisoService.obtenerImagenesVehiculo(id), null);
     }
 
     @PostMapping("/expire")
@@ -141,7 +140,7 @@ public class PermitController {
         Map<String, Object> user = authService.requireUser(request, "admin");
         long userId = ((Number) user.get("id")).longValue();
 
-        List<Long> expired = permitService.markExpired(userId, request);
+        List<Long> expired = permisoService.marcarExpirados(userId, request);
         int count = expired.size();
         return ApiResponse.success(
                 Map.of("marcados_vencidos", count),

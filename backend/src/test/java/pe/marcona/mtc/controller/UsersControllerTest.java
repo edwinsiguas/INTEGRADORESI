@@ -1,13 +1,12 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.IUsuarioService;
 
 import java.util.List;
 import java.util.Map;
@@ -25,11 +24,11 @@ class UsersControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private UserService userService;
+    private IUsuarioService usuarioService;
 
     @Test
     void listPreservesTheNestedPaginationShapeUsedByTheWebClient() throws Exception {
-        when(userService.list(any(), any())).thenReturn(Map.of(
+        when(usuarioService.listar(any(), any())).thenReturn(Map.of(
                 "data", List.of(Map.of("id", 3, "email", "user@example.com", "role", "operador")),
                 "pagination", Map.of("page", 1, "limit", 10, "total", 1, "pages", 1)));
 
@@ -42,7 +41,7 @@ class UsersControllerTest {
 
     @Test
     void createsUsersWithTheSameSuccessStatusAndEnvelope() throws Exception {
-        when(userService.create(any(), any())).thenReturn(Map.of("id", 12, "email", "new@example.com"));
+        when(usuarioService.crear(any(), any())).thenReturn(Map.of("id", 12, "email", "new@example.com"));
 
         mockMvc.perform(post("/api/users/create.php")
                         .contentType(MediaType.APPLICATION_JSON)
