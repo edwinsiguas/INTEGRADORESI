@@ -1,19 +1,14 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-import pe.marcona.mtc.dto.ApiResponse;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import pe.marcona.mtc.dto.ApiResponse;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IVehiculoMutacionService;
+import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,18 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Adaptador REST para mutaciones de vehículos (creación, edición y carga de imágenes).
+ * Inyecta la interfaz {@link IVehiculoMutacionService} cumpliendo DIP.
+ */
 @RestController
 @RequestMapping("/api/vehicles")
 public class VehicleMutationController {
-    private final VehicleMutationService vehicleMutationService;
+
+    private final IVehiculoMutacionService vehiculoMutacionService;
     private final AuthService authService;
     private final RateLimitService rateLimitService;
 
     public VehicleMutationController(
-            VehicleMutationService vehicleMutationService,
+            IVehiculoMutacionService vehiculoMutacionService,
             AuthService authService,
             RateLimitService rateLimitService) {
-        this.vehicleMutationService = vehicleMutationService;
+        this.vehiculoMutacionService = vehiculoMutacionService;
         this.authService = authService;
         this.rateLimitService = rateLimitService;
     }
@@ -59,7 +59,7 @@ public class VehicleMutationController {
 
         List<MultipartFile> files = extractImages(request);
 
-        Map<String, Object> created = vehicleMutationService.createVehicle(params, files, actorId, request);
+        Map<String, Object> created = vehiculoMutacionService.crearVehiculo(params, files, actorId, request);
         return ApiResponse.success(created, "Vehículo registrado exitosamente");
     }
 
@@ -81,7 +81,7 @@ public class VehicleMutationController {
             input.putAll(body);
         }
 
-        Map<String, Object> updated = vehicleMutationService.updateVehicle(input, actorId, request);
+        Map<String, Object> updated = vehiculoMutacionService.actualizarVehiculo(input, actorId, request);
         return ApiResponse.success(updated, "Vehículo actualizado exitosamente");
     }
 
@@ -97,21 +97,23 @@ public class VehicleMutationController {
 
         List<MultipartFile> files = extractImages(request);
 
-        Map<String, Object> result = vehicleMutationService.uploadImages(vehicleId, files, actorId, request);
+        Map<String, Object> result = vehiculoMutacionService.subirImagenes(vehicleId, files, actorId, request);
         return ApiResponse.success(result, "Imágenes subidas exitosamente");
     }
 
     private List<MultipartFile> extractImages(HttpServletRequest request) {
+        if (!(request instanceof MultipartHttpServletRequest multipartRequest)) {
+            return List.of();
+        }
         List<MultipartFile> files = new ArrayList<>();
-        if (request instanceof MultipartHttpServletRequest multipartRequest) {
-            // Check for images[], images, etc.
-            List<MultipartFile> bracketImages = multipartRequest.getFiles("images[]");
-            if (bracketImages != null && !bracketImages.isEmpty()) {
-                files.addAll(bracketImages);
-            }
-            List<MultipartFile> plainImages = multipartRequest.getFiles("images");
-            if (plainImages != null && !plainImages.isEmpty()) {
-                files.addAll(plainImages);
+        List<MultipartFile> multi = multipartRequest.getFiles("images[]");
+        if (multi != null && !multi.isEmpty()) {
+            files.addAll(multi);
+        }
+        for (String param : List.of("image", "imagen", "file", "archivo")) {
+            MultipartFile single = multipartRequest.getFile(param);
+            if (single != null && !single.isEmpty()) {
+                files.add(single);
             }
         }
         return files;

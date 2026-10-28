@@ -33,3 +33,4 @@ class UsuarioServiceTest {
         verify(usuarioDao, never()).actualizarCampos(any(), any());
     }
 }
+

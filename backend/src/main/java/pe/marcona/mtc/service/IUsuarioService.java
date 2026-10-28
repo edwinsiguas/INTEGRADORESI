@@ -23,3 +23,4 @@ public interface IUsuarioService {
      */
     Map<String, Object> actualizar(Map<String, Object> datosEntrada, HttpServletRequest solicitud);
 }
+

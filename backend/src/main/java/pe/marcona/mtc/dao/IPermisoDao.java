@@ -45,3 +45,4 @@ public interface IPermisoDao {
 
     int obtenerSiguienteSecuencia(int anio);
 }
+

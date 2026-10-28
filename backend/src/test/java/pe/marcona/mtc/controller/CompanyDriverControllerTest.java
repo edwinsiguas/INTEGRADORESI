@@ -1,7 +1,5 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +7,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IConductorService;
+import pe.marcona.mtc.service.IEmpresaService;
 
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,10 @@ class CompanyDriverControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private CompanyDriverService companyDriverService;
+    private IEmpresaService empresaService;
+
+    @MockitoBean
+    private IConductorService conductorService;
 
     @MockitoBean
     private AuthService authService;
@@ -36,7 +40,7 @@ class CompanyDriverControllerTest {
     void companyListSupportsOperatorAndKeepsPaginationEnvelope() throws Exception {
         when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 7, "role", "operador"));
-        when(companyDriverService.listCompanies(any())).thenReturn(Map.of(
+        when(empresaService.listarEmpresas(any())).thenReturn(Map.of(
                 "data", java.util.List.of(Map.of("id", 9, "nombre", "Transportes")),
                 "pagination", Map.of("page", 1, "limit", 10, "total", 1, "active_total", 1, "pages", 1)));
 
@@ -51,7 +55,7 @@ class CompanyDriverControllerTest {
     void driverCreateReturnsCreatedStatusAndLegacyResponseShape() throws Exception {
         when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 7, "role", "operador"));
-        when(companyDriverService.createDriver(any(), any(HttpServletRequest.class), eq(7L)))
+        when(conductorService.crearConductor(any(), any(HttpServletRequest.class), eq(7L)))
                 .thenReturn(Map.of("id", 12, "nombre_completo", "Chofer de prueba"));
 
         mockMvc.perform(post("/api/drivers/create.php")

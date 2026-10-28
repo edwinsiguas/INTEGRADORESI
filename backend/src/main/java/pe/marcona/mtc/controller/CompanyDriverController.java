@@ -1,33 +1,36 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-import pe.marcona.mtc.dto.ApiResponse;
-import pe.marcona.mtc.exception.ApiException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import pe.marcona.mtc.dto.ApiResponse;
+import pe.marcona.mtc.exception.ApiException;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IConductorService;
+import pe.marcona.mtc.service.IEmpresaService;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Adaptador REST para operaciones sobre empresas de transporte y conductores.
+ * Inyecta las abstracciones segregadas {@link IEmpresaService} e {@link IConductorService} (SRP/DIP).
+ */
 @RestController
 @RequestMapping("/api")
 public class CompanyDriverController {
-    private final CompanyDriverService companyDriverService;
+
+    private final IEmpresaService empresaService;
+    private final IConductorService conductorService;
     private final AuthService authService;
 
-    public CompanyDriverController(CompanyDriverService companyDriverService, AuthService authService) {
-        this.companyDriverService = companyDriverService;
+    public CompanyDriverController(
+            IEmpresaService empresaService,
+            IConductorService conductorService,
+            AuthService authService) {
+        this.empresaService = empresaService;
+        this.conductorService = conductorService;
         this.authService = authService;
     }
 
@@ -35,14 +38,14 @@ public class CompanyDriverController {
     public ApiResponse<Map<String, Object>> listCompanies(
             @RequestParam Map<String, String> query, HttpServletRequest request) {
         authService.requireUserInRoles(request, Set.of("admin", "operador"));
-        return ApiResponse.success(companyDriverService.listCompanies(query), null);
+        return ApiResponse.success(empresaService.listarEmpresas(query), null);
     }
 
     @GetMapping("/companies/get.php")
     public ApiResponse<Map<String, Object>> getCompany(
             @RequestParam long id, HttpServletRequest request) {
         authService.requireUserInRoles(request, Set.of("admin", "operador"));
-        return ApiResponse.success(companyDriverService.getCompany(id), null);
+        return ApiResponse.success(empresaService.obtenerEmpresa(id), null);
     }
 
     @PostMapping("/companies/create.php")
@@ -51,7 +54,7 @@ public class CompanyDriverController {
             @RequestBody(required = false) Map<String, Object> body, HttpServletRequest request) {
         Map<String, Object> actor = authService.requireUser(request, "admin");
         long actorId = ((Number) actor.get("id")).longValue();
-        return ApiResponse.success(companyDriverService.createCompany(
+        return ApiResponse.success(empresaService.crearEmpresa(
                 body == null ? Map.of() : body, request, actorId), "Empresa creada exitosamente");
     }
 
@@ -60,7 +63,7 @@ public class CompanyDriverController {
             @RequestBody(required = false) Map<String, Object> body, HttpServletRequest request) {
         Map<String, Object> actor = authService.requireUser(request, "admin");
         long actorId = ((Number) actor.get("id")).longValue();
-        return ApiResponse.success(companyDriverService.updateCompany(
+        return ApiResponse.success(empresaService.actualizarEmpresa(
                 body == null ? Map.of() : body, request, actorId), "Empresa actualizada exitosamente");
     }
 
@@ -72,7 +75,7 @@ public class CompanyDriverController {
         Map<String, Object> actor = authService.requireUser(request, "admin");
         long actorId = ((Number) actor.get("id")).longValue();
         Object requestedId = body != null && body.get("id") != null ? body.get("id") : id;
-        return ApiResponse.success(companyDriverService.toggleCompany(parseId(requestedId), request, actorId),
+        return ApiResponse.success(empresaService.alternarEstado(parseId(requestedId), request, actorId),
                 "Estado actualizado exitosamente");
     }
 
@@ -80,7 +83,7 @@ public class CompanyDriverController {
     public ApiResponse<Map<String, Object>> listDrivers(
             @RequestParam Map<String, String> query, HttpServletRequest request) {
         authService.requireUserInRoles(request, Set.of("admin", "operador"));
-        return ApiResponse.success(companyDriverService.listDrivers(query), null);
+        return ApiResponse.success(conductorService.listarConductores(query), null);
     }
 
     @PostMapping("/drivers/create.php")
@@ -89,7 +92,7 @@ public class CompanyDriverController {
             @RequestBody(required = false) Map<String, Object> body, HttpServletRequest request) {
         Map<String, Object> actor = authService.requireUserInRoles(request, Set.of("admin", "operador"));
         long actorId = ((Number) actor.get("id")).longValue();
-        return ApiResponse.success(companyDriverService.createDriver(
+        return ApiResponse.success(conductorService.crearConductor(
                 body == null ? Map.of() : body, request, actorId), "Chofer creado exitosamente");
     }
 
@@ -104,7 +107,7 @@ public class CompanyDriverController {
         if (!input.containsKey("id") && id != null) {
             input.put("id", id);
         }
-        return ApiResponse.success(companyDriverService.updateDriver(
+        return ApiResponse.success(conductorService.actualizarConductor(
                 input, request, actorId), "Chofer actualizado exitosamente");
     }
 

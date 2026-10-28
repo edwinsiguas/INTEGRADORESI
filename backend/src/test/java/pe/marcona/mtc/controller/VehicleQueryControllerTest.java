@@ -1,7 +1,5 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +7,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IVehiculoConsultaService;
+import pe.marcona.mtc.service.IVehiculoMutacionService;
 
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,10 @@ class VehicleQueryControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private VehicleQueryService vehicleQueryService;
+    private IVehiculoConsultaService vehiculoConsultaService;
+
+    @MockitoBean
+    private IVehiculoMutacionService vehiculoMutacionService;
 
     @MockitoBean
     private AuthService authService;
@@ -36,7 +40,7 @@ class VehicleQueryControllerTest {
     void listAllowsOperatorAndReturnsVehiclePagination() throws Exception {
         when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 2, "role", "operador"));
-        when(vehicleQueryService.list(any())).thenReturn(Map.of(
+        when(vehiculoConsultaService.listar(any())).thenReturn(Map.of(
                 "data", java.util.List.of(Map.of("id", 5, "placa", "ABC-123")),
                 "pagination", Map.of("page", 1, "limit", 10, "total", 1, "pages", 1)));
 
@@ -50,12 +54,12 @@ class VehicleQueryControllerTest {
     void statusToggleRemainsAdminOnlyAndReturnsLegacyPayload() throws Exception {
         when(authService.requireUser(any(HttpServletRequest.class), eq("admin")))
                 .thenReturn(Map.of("id", 2, "role", "admin"));
-        when(vehicleQueryService.toggleStatus(eq(5L), any(HttpServletRequest.class), eq(2L)))
+        when(vehiculoMutacionService.alternarEstado(eq(5L), any(HttpServletRequest.class), eq(2L)))
                 .thenReturn(Map.of("id", 5, "estado", "inactivo"));
 
         mockMvc.perform(put("/api/vehicles/toggle-status.php")
                         .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"id\":5}"))
+                        .content("{\"id\":5}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(5))
                 .andExpect(jsonPath("$.data.estado").value("inactivo"));

@@ -263,3 +263,4 @@ public class PermisoDaoImpl implements IPermisoDao {
         return secuencia == null ? 1 : secuencia;
     }
 }
+

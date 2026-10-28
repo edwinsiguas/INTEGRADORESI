@@ -1,7 +1,5 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +7,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.AuditService;
+import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.CirculationService;
+import pe.marcona.mtc.service.IAsignacionService;
+import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +30,7 @@ class AssignmentControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AssignmentService assignmentService;
+    private IAsignacionService asignacionService;
 
     @MockitoBean
     private CirculationService circulationService;
@@ -45,7 +48,7 @@ class AssignmentControllerTest {
     void assignmentListSupportsOperatorRoleAndNestedPaginationResponse() throws Exception {
         when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(java.util.Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 3, "role", "operador"));
-        when(assignmentService.list(any())).thenReturn(Map.of(
+        when(asignacionService.listar(any())).thenReturn(Map.of(
                 "data", List.of(Map.of("id", 8, "placa", "ABC-123")),
                 "pagination", Map.of("page", 1, "limit", 10, "total", 1, "pages", 1)));
 
@@ -60,7 +63,7 @@ class AssignmentControllerTest {
     void createPreservesCreatedStatusAndResponseContract() throws Exception {
         when(authService.requireUser(any(HttpServletRequest.class), eq("admin")))
                 .thenReturn(Map.of("id", 3, "role", "admin"));
-        when(assignmentService.assign(any(), eq(3L))).thenReturn(Map.of(
+        when(asignacionService.asignar(any(), eq(3L))).thenReturn(Map.of(
                 "id", 8, "vehicle_id", 20, "driver_id", 30, "tipo", "propietario"));
 
         mockMvc.perform(post("/api/assignments")
