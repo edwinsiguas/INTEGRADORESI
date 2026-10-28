@@ -1,6 +1,14 @@
 # TRANSIGOVAI — Sistema de Gestión y Fiscalización de Permisos de Transporte
 ### Municipalidad Distrital de Marcona — Subgerencia de Transportes y Seguridad Vial
 
+grupo 5
+integrantes
+1.	Siguas Astorga, Edwin Emir- 
+2.	Huaccho Perales, Neil Victor 
+3.	Chavez Sanchez, Zarella 
+4.	Rafaele Matos, Leidy Diana
+
+
 ![Java](https://img.shields.io/badge/Backend-Java%2021%20LTS-orange?style=for-the-badge&logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Framework-Spring%20Boot%203.5.3-brightgreen?style=for-the-badge&logo=springboot)
 ![React](https://img.shields.io/badge/Frontend-React%2019%20%7C%20TypeScript-blue?style=for-the-badge&logo=react)
