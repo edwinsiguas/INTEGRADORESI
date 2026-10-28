@@ -9,8 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import pe.marcona.mtc.dao.IConductorDao;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuditService;
 import pe.marcona.mtc.service.IConductorService;
+import pe.marcona.mtc.service.IAuditoriaService;
 
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -19,7 +19,7 @@ import java.util.*;
 
 /**
  * Implementación de la lógica de negocio para la gestión exclusiva de conductores.
- * Aplica Inversión de Dependencias (DIP) inyectando {@link IConductorDao}.
+ * Aplica Inversión de Dependencias (DIP) inyectando {@link IConductorDao} e {@link IAuditoriaService}.
  */
 @Service
 public class ConductorServiceImpl implements IConductorService {
@@ -29,11 +29,11 @@ public class ConductorServiceImpl implements IConductorService {
     private static final Set<String> ESTADOS_CONDUCTOR = Set.of("activo", "inactivo", "suspendido");
 
     private final IConductorDao conductorDao;
-    private final AuditService auditService;
+    private final IAuditoriaService auditoriaService;
 
-    public ConductorServiceImpl(IConductorDao conductorDao, AuditService auditService) {
+    public ConductorServiceImpl(IConductorDao conductorDao, IAuditoriaService auditoriaService) {
         this.conductorDao = Preconditions.checkNotNull(conductorDao, "El DAO de conductor no puede ser nulo");
-        this.auditService = Preconditions.checkNotNull(auditService, "El servicio de auditoría no puede ser nulo");
+        this.auditoriaService = Preconditions.checkNotNull(auditoriaService, "El servicio de auditoría no puede ser nulo");
     }
 
     @Override
@@ -103,7 +103,7 @@ public class ConductorServiceImpl implements IConductorService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Chofer no encontrado"));
 
         long id = ((Number) conductor.get("id")).longValue();
-        auditService.record(idActor, "crear", "chofer", id, "Chofer creado: " + nombre, solicitud);
+        auditoriaService.registrarAccion(idActor, "crear", "chofer", id, "Chofer creado: " + nombre, solicitud);
         log.info("Conductor creado exitosamente: id={}, dni={}", id, dni);
 
         return formatearFechas(conductor);
@@ -150,7 +150,7 @@ public class ConductorServiceImpl implements IConductorService {
             throw errorValidacion("El DNI o número de licencia ya está registrado");
         }
 
-        auditService.record(idActor, "actualizar", "chofer", id, "Chofer actualizado", solicitud);
+        auditoriaService.registrarAccion(idActor, "actualizar", "chofer", id, "Chofer actualizado", solicitud);
         log.info("Conductor actualizado: id={}", id);
 
         return formatearFechas(conductorDao.obtenerPorId(id)

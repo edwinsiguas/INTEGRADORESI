@@ -10,8 +10,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import pe.marcona.mtc.dao.IUsuarioDao;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuditService;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAuditoriaService;
+import pe.marcona.mtc.service.IAutenticacionService;
 import pe.marcona.mtc.service.IUsuarioService;
 
 import java.sql.Timestamp;
@@ -21,7 +21,7 @@ import java.util.*;
 
 /**
  * Implementación de la lógica de negocio para la gestión de usuarios.
- * Aplica Inversión de Dependencias inyectando {@link IUsuarioDao}.
+ * Aplica Inversión de Dependencias inyectando {@link IUsuarioDao}, {@link IAutenticacionService} e {@link IAuditoriaService}.
  */
 @Service
 public class UsuarioServiceImpl implements IUsuarioService {
@@ -33,19 +33,22 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private static final DateTimeFormatter TIMESTAMP_BD = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final IUsuarioDao usuarioDao;
-    private final AuthService authService;
-    private final AuditService auditService;
+    private final IAutenticacionService autenticacionService;
+    private final IAuditoriaService auditoriaService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-    public UsuarioServiceImpl(IUsuarioDao usuarioDao, AuthService authService, AuditService auditService) {
+    public UsuarioServiceImpl(
+            IUsuarioDao usuarioDao,
+            IAutenticacionService autenticacionService,
+            IAuditoriaService auditoriaService) {
         this.usuarioDao = Preconditions.checkNotNull(usuarioDao, "El DAO de usuario no puede ser nulo");
-        this.authService = Preconditions.checkNotNull(authService, "El servicio de autenticación no puede ser nulo");
-        this.auditService = Preconditions.checkNotNull(auditService, "El servicio de auditoría no puede ser nulo");
+        this.autenticacionService = Preconditions.checkNotNull(autenticacionService, "El servicio de autenticación no puede ser nulo");
+        this.auditoriaService = Preconditions.checkNotNull(auditoriaService, "El servicio de auditoría no puede ser nulo");
     }
 
     @Override
     public Map<String, Object> listar(Map<String, String> consulta, HttpServletRequest solicitud) {
-        authService.requireUser(solicitud, "admin");
+        autenticacionService.requerirUsuario(solicitud, "admin");
 
         int pagina = enteroPositivo(consulta.get("page"), 1);
         int limite = enteroPositivo(consulta.get("limit"), 10);
@@ -78,7 +81,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     public Map<String, Object> crear(Map<String, Object> datosEntrada, HttpServletRequest solicitud) {
-        Map<String, Object> actor = authService.requireUser(solicitud, "admin");
+        Map<String, Object> actor = autenticacionService.requerirUsuario(solicitud, "admin");
 
         String email = texto(datosEntrada, "email");
         String password = texto(datosEntrada, "password");
@@ -113,7 +116,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         long idUsuario = ((Number) creado.get("id")).longValue();
         long idActor = ((Number) actor.get("id")).longValue();
 
-        auditService.record(idActor, "crear", "usuario", idUsuario, "Usuario creado: " + email, solicitud);
+        auditoriaService.registrarAccion(idActor, "crear", "usuario", idUsuario, "Usuario creado: " + email, solicitud);
         log.info("Usuario creado exitosamente: id={}, email={}", idUsuario, email);
 
         return formatearMarcasDeTiempo(creado);
@@ -121,7 +124,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     public Map<String, Object> actualizar(Map<String, Object> datosEntrada, HttpServletRequest solicitud) {
-        Map<String, Object> actor = authService.requireUser(solicitud, null);
+        Map<String, Object> actor = autenticacionService.requerirUsuario(solicitud, null);
         Long idUsuario = parsearId(datosEntrada == null ? null : datosEntrada.get("id"));
         if (idUsuario == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "ID inválido");
@@ -194,7 +197,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "El email ya está registrado");
         }
 
-        auditService.record(idActor, "actualizar", "usuario", idUsuario, "Credenciales actualizadas", solicitud);
+        auditoriaService.registrarAccion(idActor, "actualizar", "usuario", idUsuario, "Credenciales actualizadas", solicitud);
         log.info("Usuario actualizado exitosamente: id={}", idUsuario);
 
         Map<String, Object> actualizado = usuarioDao.obtenerPorId(idUsuario)
@@ -285,4 +288,3 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return email.length() <= 100 && email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     }
 }
-

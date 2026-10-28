@@ -15,14 +15,14 @@ import static org.mockito.Mockito.*;
 
 class UsuarioServiceTest {
     private final IUsuarioDao usuarioDao = mock(IUsuarioDao.class);
-    private final AuthService authService = mock(AuthService.class);
-    private final AuditService auditService = mock(AuditService.class);
-    private final UsuarioServiceImpl usuarioService = new UsuarioServiceImpl(usuarioDao, authService, auditService);
+    private final IAutenticacionService autenticacionService = mock(IAutenticacionService.class);
+    private final IAuditoriaService auditoriaService = mock(IAuditoriaService.class);
+    private final UsuarioServiceImpl usuarioService = new UsuarioServiceImpl(usuarioDao, autenticacionService, auditoriaService);
     private final HttpServletRequest request = mock(HttpServletRequest.class);
 
     @Test
     void preventsNonAdminUsersFromEditingAnotherAccount() {
-        when(authService.requireUser(eq(request), eq(null)))
+        when(autenticacionService.requerirUsuario(eq(request), eq(null)))
                 .thenReturn(Map.of("id", 4, "role", "operador"));
 
         assertThatThrownBy(() -> usuarioService.actualizar(
@@ -33,4 +33,3 @@ class UsuarioServiceTest {
         verify(usuarioDao, never()).actualizarCampos(any(), any());
     }
 }
-

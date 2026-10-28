@@ -7,9 +7,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 import pe.marcona.mtc.service.IVehiculoMutacionService;
-import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.List;
 import java.util.Map;
@@ -31,13 +31,13 @@ class VehicleMutationControllerTest {
     @MockitoBean
     private IVehiculoMutacionService vehiculoMutacionService;
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void createsVehicleWithMultipart() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
 
         when(vehiculoMutacionService.crearVehiculo(any(), any(), eq(1L), any()))
@@ -59,7 +59,7 @@ class VehicleMutationControllerTest {
 
     @Test
     void updatesVehicle() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
 
         when(vehiculoMutacionService.actualizarVehiculo(any(), eq(1L), any()))

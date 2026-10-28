@@ -13,3 +13,4 @@ public interface IVehiculoConsultaDao {
     List<Map<String, Object>> listarVehiculos(String busqueda, Long idEmpresa, Long idConductor,
                                              String estado, boolean incluirInactivos, int limite, long desplazamiento);
 }
+

@@ -7,14 +7,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pe.marcona.mtc.service.AuditService;
-import pe.marcona.mtc.service.AuthService;
-import pe.marcona.mtc.service.CirculationService;
 import pe.marcona.mtc.service.IAsignacionService;
-import pe.marcona.mtc.service.RateLimitService;
+import pe.marcona.mtc.service.IAuditoriaService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ICirculacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,20 +34,20 @@ class AssignmentControllerTest {
     private IAsignacionService asignacionService;
 
     @MockitoBean
-    private CirculationService circulationService;
+    private ICirculacionService circulacionService;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @MockitoBean
-    private AuditService auditService;
+    private IAuditoriaService auditoriaService;
 
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void assignmentListSupportsOperatorRoleAndNestedPaginationResponse() throws Exception {
-        when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(java.util.Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 3, "role", "operador"));
         when(asignacionService.listar(any())).thenReturn(Map.of(
                 "data", List.of(Map.of("id", 8, "placa", "ABC-123")),
@@ -61,7 +62,7 @@ class AssignmentControllerTest {
 
     @Test
     void createPreservesCreatedStatusAndResponseContract() throws Exception {
-        when(authService.requireUser(any(HttpServletRequest.class), eq("admin")))
+        when(autenticacionService.requerirUsuario(any(HttpServletRequest.class), eq("admin")))
                 .thenReturn(Map.of("id", 3, "role", "admin"));
         when(asignacionService.asignar(any(), eq(3L))).thenReturn(Map.of(
                 "id", 8, "vehicle_id", 20, "driver_id", 30, "tipo", "propietario"));

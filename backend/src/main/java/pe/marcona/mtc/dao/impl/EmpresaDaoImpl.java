@@ -123,3 +123,4 @@ public class EmpresaDaoImpl implements IEmpresaDao {
         return jdbcTemplate.update(sql, nuevoEstado, id);
     }
 }
+

@@ -1,36 +1,34 @@
 package pe.marcona.mtc.service;
 
-import pe.marcona.mtc.exception.*;
-
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
+import pe.marcona.mtc.dao.ICirculacionDao;
+import pe.marcona.mtc.exception.ApiException;
+import pe.marcona.mtc.service.impl.CirculacionServiceImpl;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class CirculationServiceTest {
-    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-    private final CirculationService service = new CirculationService(jdbcTemplate);
+class CirculacionServiceTest {
+    private final ICirculacionDao circulacionDao = mock(ICirculacionDao.class);
+    private final ICirculacionService service = new CirculacionServiceImpl(circulacionDao);
 
     @Test
     void validatesDniFormatBeforeQueryingTheDatabase() {
-        assertThatThrownBy(() -> service.validate(Map.of("dni", "123")))
+        assertThatThrownBy(() -> service.validar(Map.of("dni", "123")))
                 .isInstanceOf(ApiException.class)
                 .hasMessage("dni debe tener 8 dígitos");
     }
 
     @Test
     void returnsTheExistingNotFoundResponseForAnUnassignedPlate() {
-        when(jdbcTemplate.queryForList(anyString(), eq("ABC-123"))).thenReturn(List.of());
+        when(circulacionDao.buscarPorPlaca("ABC-123")).thenReturn(Optional.empty());
 
-        Map<String, Object> result = service.validate(Map.of("placa", "abc-123"));
+        Map<String, Object> result = service.validar(Map.of("placa", "abc-123"));
 
         assertThat(result)
                 .containsEntry("puede_circular", false)

@@ -1,39 +1,36 @@
 package pe.marcona.mtc.service;
 
-import pe.marcona.mtc.exception.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pe.marcona.mtc.dao.IAutenticacionDao;
+import pe.marcona.mtc.exception.ApiException;
+import pe.marcona.mtc.service.impl.AutenticacionServiceImpl;
+import pe.marcona.mtc.service.impl.TokenLegadoServiceImpl;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-class AuthServiceTest {
-    private final JdbcTemplate jdbcTemplate = mock(JdbcTemplate.class);
-    private final RateLimitService rateLimitService = mock(RateLimitService.class);
-    private final AuditService auditService = mock(AuditService.class);
-    private final LegacyTokenService tokenService =
-            new LegacyTokenService(new ObjectMapper(), "test-secret", 3600, "test");
-    private final AuthService authService =
-            new AuthService(jdbcTemplate, tokenService, rateLimitService, auditService);
+class AutenticacionServiceTest {
+    private final IAutenticacionDao autenticacionDao = mock(IAutenticacionDao.class);
+    private final ILimitePeticionesService limitePeticionesService = mock(ILimitePeticionesService.class);
+    private final IAuditoriaService auditoriaService = mock(IAuditoriaService.class);
+    private final ITokenLegadoService tokenLegadoService =
+            new TokenLegadoServiceImpl(new ObjectMapper(), "test-secret", 3600, "test");
+    private final IAutenticacionService autenticacionService =
+            new AutenticacionServiceImpl(autenticacionDao, tokenLegadoService, limitePeticionesService, auditoriaService);
 
     @Test
     void loginAcceptsExistingPhpBcryptHashesAndIssuesACompatibleToken() {
         String passwordHash = new BCryptPasswordEncoder(4).encode("valid-password")
                 .replaceFirst("^\\$2a\\$", "\\$2y\\$");
-        when(jdbcTemplate.queryForList(anyString(), eq("user@example.com"), eq("activo")))
-                .thenReturn(List.of(Map.of(
+        when(autenticacionDao.obtenerUsuarioActivoPorEmail("user@example.com"))
+                .thenReturn(Optional.of(Map.of(
                         "id", 17L,
                         "email", "user@example.com",
                         "password", passwordHash,
@@ -43,22 +40,22 @@ class AuthServiceTest {
                         "is_active", true)));
         MockHttpServletRequest request = request();
 
-        Map<String, Object> response = authService.login(
+        Map<String, Object> response = autenticacionService.iniciarSesion(
                 Map.of("email", "user@example.com", "password", "valid-password"), request);
 
-        assertThat(tokenService.verify((String) response.get("token")))
+        assertThat(tokenLegadoService.verificar((String) response.get("token")))
                 .containsEntry("user_id", 17)
                 .containsEntry("role", "admin");
         assertThat(response).doesNotContainKey("password");
-        verify(rateLimitService).check("login", "127.0.0.1", 5, 900);
-        verify(auditService).record(17, "login", "usuario", 17, "Login exitoso", request);
+        verify(limitePeticionesService).verificar("login", "127.0.0.1", 5, 900);
+        verify(auditoriaService).registrarAccion(17, "login", "usuario", 17, "Login exitoso", request);
     }
 
     @Test
     void rejectsAnInactiveUserEvenWhenTheTokenSignatureIsValid() {
-        String token = tokenService.generate(17, "admin");
-        when(jdbcTemplate.queryForList(anyString(), eq(17L)))
-                .thenReturn(List.of(Map.of(
+        String token = tokenLegadoService.generar(17, "admin");
+        when(autenticacionDao.obtenerUsuarioPorId(17L))
+                .thenReturn(Optional.of(Map.of(
                         "id", 17L,
                         "email", "user@example.com",
                         "nombre", "Usuario",
@@ -68,7 +65,7 @@ class AuthServiceTest {
         MockHttpServletRequest request = request();
         request.addHeader("Authorization", "Bearer " + token);
 
-        assertThatThrownBy(() -> authService.requireUser(request, "admin"))
+        assertThatThrownBy(() -> autenticacionService.requerirUsuario(request, "admin"))
                 .isInstanceOf(ApiException.class)
                 .hasMessage("Usuario inválido o inactivo");
     }

@@ -1,12 +1,13 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.IExportacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 
 import java.util.List;
 import java.util.Map;
@@ -25,17 +26,17 @@ class ExportControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ExportService exportService;
+    private IExportacionService exportacionService;
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void exportsCompanies() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
-        when(exportService.exportCompanies(any()))
+        when(exportacionService.exportarEmpresas(any()))
                 .thenReturn(List.of(Map.of("id", 1, "razon_social", "Empresa San Juan")));
 
         mockMvc.perform(get("/api/companies/export.php"))
@@ -46,9 +47,9 @@ class ExportControllerTest {
 
     @Test
     void exportsVehicles() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "operador"));
-        when(exportService.exportVehicles(any()))
+        when(exportacionService.exportarVehiculos(any()))
                 .thenReturn(List.of(Map.of("placa", "V1-1234", "marca", "Toyota")));
 
         mockMvc.perform(get("/api/vehicles/export.php"))

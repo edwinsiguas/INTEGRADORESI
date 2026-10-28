@@ -3,6 +3,7 @@ package pe.marcona.mtc.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import pe.marcona.mtc.service.impl.TokenLegadoServiceImpl;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -12,15 +13,15 @@ import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class LegacyTokenServiceTest {
-    private final LegacyTokenService tokenService =
-            new LegacyTokenService(new ObjectMapper(), "test-secret", 3600, "test");
+class TokenLegadoServiceTest {
+    private final ITokenLegadoService tokenService =
+            new TokenLegadoServiceImpl(new ObjectMapper(), "test-secret", 3600, "test");
 
     @Test
     void generatesVerifiableTokensUsingLegacyStandardBase64Segments() {
-        String token = tokenService.generate(42, "admin");
+        String token = tokenService.generar(42, "admin");
 
-        assertThat(tokenService.verify(token))
+        assertThat(tokenService.verificar(token))
                 .containsEntry("user_id", 42)
                 .containsEntry("role", "admin");
         assertThat(token.split("\\.", -1)).hasSize(3);
@@ -28,11 +29,11 @@ class LegacyTokenServiceTest {
 
     @Test
     void rejectsTamperedTokens() {
-        String token = tokenService.generate(42, "admin");
+        String token = tokenService.generar(42, "admin");
         String[] parts = token.split("\\.", -1);
         String tampered = parts[0] + "." + parts[1] + ".AAAA";
 
-        assertThat(tokenService.verify(tampered)).isNull();
+        assertThat(tokenService.verificar(tampered)).isNull();
     }
 
     @Test
@@ -49,7 +50,7 @@ class LegacyTokenServiceTest {
         mac.init(new SecretKeySpec("test-secret".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         String token = content + "." + encoder.encodeToString(mac.doFinal(content.getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(tokenService.verify(token)).containsEntry("user_id", "42");
+        assertThat(tokenService.verificar(token)).containsEntry("user_id", "42");
     }
 
     @Test

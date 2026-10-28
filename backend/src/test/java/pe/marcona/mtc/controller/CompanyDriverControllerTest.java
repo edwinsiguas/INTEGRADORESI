@@ -7,7 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAutenticacionService;
 import pe.marcona.mtc.service.IConductorService;
 import pe.marcona.mtc.service.IEmpresaService;
 
@@ -34,11 +34,11 @@ class CompanyDriverControllerTest {
     private IConductorService conductorService;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @Test
     void companyListSupportsOperatorAndKeepsPaginationEnvelope() throws Exception {
-        when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 7, "role", "operador"));
         when(empresaService.listarEmpresas(any())).thenReturn(Map.of(
                 "data", java.util.List.of(Map.of("id", 9, "nombre", "Transportes")),
@@ -53,7 +53,7 @@ class CompanyDriverControllerTest {
 
     @Test
     void driverCreateReturnsCreatedStatusAndLegacyResponseShape() throws Exception {
-        when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 7, "role", "operador"));
         when(conductorService.crearConductor(any(), any(HttpServletRequest.class), eq(7L)))
                 .thenReturn(Map.of("id", 12, "nombre_completo", "Chofer de prueba"));

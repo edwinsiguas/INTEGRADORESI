@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import pe.marcona.mtc.dto.ApiResponse;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 import pe.marcona.mtc.service.IVehiculoMutacionService;
-import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,23 +18,23 @@ import java.util.Set;
 
 /**
  * Adaptador REST para mutaciones de vehículos (creación, edición y carga de imágenes).
- * Inyecta la interfaz {@link IVehiculoMutacionService} cumpliendo DIP.
+ * Inyecta las interfaces {@link IVehiculoMutacionService}, {@link IAutenticacionService} e {@link ILimitePeticionesService} cumpliendo DIP.
  */
 @RestController
 @RequestMapping("/api/vehicles")
 public class VehicleMutationController {
 
     private final IVehiculoMutacionService vehiculoMutacionService;
-    private final AuthService authService;
-    private final RateLimitService rateLimitService;
+    private final IAutenticacionService autenticacionService;
+    private final ILimitePeticionesService limitePeticionesService;
 
     public VehicleMutationController(
             IVehiculoMutacionService vehiculoMutacionService,
-            AuthService authService,
-            RateLimitService rateLimitService) {
+            IAutenticacionService autenticacionService,
+            ILimitePeticionesService limitePeticionesService) {
         this.vehiculoMutacionService = vehiculoMutacionService;
-        this.authService = authService;
-        this.rateLimitService = rateLimitService;
+        this.autenticacionService = autenticacionService;
+        this.limitePeticionesService = limitePeticionesService;
     }
 
     @PostMapping(value = {"/create.php", ""})
@@ -43,8 +43,8 @@ public class VehicleMutationController {
             @RequestParam(required = false) Map<String, String> queryParams,
             HttpServletRequest request) {
 
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         long actorId = ((Number) user.get("id")).longValue();
 
         Map<String, String> params = new HashMap<>();
@@ -69,8 +69,8 @@ public class VehicleMutationController {
             @RequestParam(required = false) Map<String, String> queryParams,
             HttpServletRequest request) {
 
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         long actorId = ((Number) user.get("id")).longValue();
 
         Map<String, Object> input = new HashMap<>();
@@ -91,8 +91,8 @@ public class VehicleMutationController {
             @RequestParam("vehicle_id") long vehicleId,
             HttpServletRequest request) {
 
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         long actorId = ((Number) user.get("id")).longValue();
 
         List<MultipartFile> files = extractImages(request);

@@ -1,7 +1,5 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +7,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.IVerificacionService;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,17 +26,17 @@ class VerificationControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private VerificationService verificationService;
+    private IVerificacionService verificacionService;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @Test
     void createAllowsFiscalizadorAndPreservesVerificationResponse() throws Exception {
         Map<String, Object> user = Map.of("id", 14, "role", "fiscalizador");
-        when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador", "fiscalizador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador", "fiscalizador"))))
                 .thenReturn(user);
-        when(verificationService.create(any(), any(HttpServletRequest.class), eq(user)))
+        when(verificacionService.crear(any(), any(HttpServletRequest.class), eq(user)))
                 .thenReturn(Map.of("puede_circular", true, "razon", "Permiso válido"));
 
         mockMvc.perform(post("/api/verifications/create.php")

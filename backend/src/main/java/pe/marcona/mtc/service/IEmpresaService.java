@@ -18,3 +18,4 @@ public interface IEmpresaService {
 
     Map<String, Object> alternarEstado(long id, HttpServletRequest solicitud, long idActor);
 }
+

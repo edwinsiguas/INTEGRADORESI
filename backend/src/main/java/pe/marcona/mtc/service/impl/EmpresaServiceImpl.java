@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import pe.marcona.mtc.dao.IEmpresaDao;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuditService;
+import pe.marcona.mtc.service.IAuditoriaService;
 import pe.marcona.mtc.service.IEmpresaService;
 
 import java.sql.Date;
@@ -18,7 +18,7 @@ import java.util.*;
 
 /**
  * Implementación de la lógica de negocio para la gestión exclusiva de empresas.
- * Aplica Inversión de Dependencias (DIP) inyectando {@link IEmpresaDao}.
+ * Aplica Inversión de Dependencias (DIP) inyectando {@link IEmpresaDao} e {@link IAuditoriaService}.
  */
 @Service
 public class EmpresaServiceImpl implements IEmpresaService {
@@ -26,11 +26,11 @@ public class EmpresaServiceImpl implements IEmpresaService {
     private static final Logger log = LoggerFactory.getLogger(EmpresaServiceImpl.class);
 
     private final IEmpresaDao empresaDao;
-    private final AuditService auditService;
+    private final IAuditoriaService auditoriaService;
 
-    public EmpresaServiceImpl(IEmpresaDao empresaDao, AuditService auditService) {
+    public EmpresaServiceImpl(IEmpresaDao empresaDao, IAuditoriaService auditoriaService) {
         this.empresaDao = Preconditions.checkNotNull(empresaDao, "El DAO de empresa no puede ser nulo");
-        this.auditService = Preconditions.checkNotNull(auditService, "El servicio de auditoría no puede ser nulo");
+        this.auditoriaService = Preconditions.checkNotNull(auditoriaService, "El servicio de auditoría no puede ser nulo");
     }
 
     @Override
@@ -103,7 +103,7 @@ public class EmpresaServiceImpl implements IEmpresaService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Empresa no encontrada"));
 
         long id = ((Number) empresa.get("id")).longValue();
-        auditService.record(idActor, "crear", "empresa", id, "Empresa creada: " + nombre, solicitud);
+        auditoriaService.registrarAccion(idActor, "crear", "empresa", id, "Empresa creada: " + nombre, solicitud);
         log.info("Empresa creada con éxito: id={}, ruc={}", id, ruc);
 
         return formatearFechas(empresa);
@@ -148,7 +148,7 @@ public class EmpresaServiceImpl implements IEmpresaService {
             throw errorValidacion("El nombre de la empresa o RUC ya está registrado");
         }
 
-        auditService.record(idActor, "actualizar", "empresa", id, "Empresa actualizada: " + nombre, solicitud);
+        auditoriaService.registrarAccion(idActor, "actualizar", "empresa", id, "Empresa actualizada: " + nombre, solicitud);
         log.info("Empresa actualizada: id={}", id);
 
         return formatearFechas(empresaDao.obtenerPorId(id)
@@ -163,7 +163,7 @@ public class EmpresaServiceImpl implements IEmpresaService {
         String nuevoEstado = "activo".equals(empresa.get("estado")) ? "inactivo" : "activo";
         empresaDao.actualizarEstado(id, nuevoEstado);
 
-        auditService.record(idActor, "cambio_estado", "empresa", id,
+        auditoriaService.registrarAccion(idActor, "cambio_estado", "empresa", id,
                 "Estado de empresa '" + empresa.get("nombre") + "' cambiado a " + nuevoEstado, solicitud);
         log.info("Estado de empresa alternado: id={}, estado={}", id, nuevoEstado);
 

@@ -1,14 +1,14 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-import pe.marcona.mtc.exception.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.exception.ApiException;
+import pe.marcona.mtc.service.IAutenticacionService;
 
 import java.util.Map;
 
@@ -24,11 +24,11 @@ class AuthControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @Test
     void loginKeepsTheExistingResponseEnvelope() throws Exception {
-        when(authService.login(any(), any())).thenReturn(Map.of(
+        when(autenticacionService.iniciarSesion(any(), any())).thenReturn(Map.of(
                 "id", 8,
                 "email", "admin@example.com",
                 "nombre", "Administradora",
@@ -49,7 +49,7 @@ class AuthControllerTest {
 
     @Test
     void logoutRequiresTheExistingSessionAndReturnsNullData() throws Exception {
-        when(authService.logout(any())).thenReturn(null);
+        when(autenticacionService.cerrarSesion(any())).thenReturn(null);
 
         mockMvc.perform(post("/api/auth/logout.php").header("X-Auth-Token", "legacy-token"))
                 .andExpect(status().isOk())
@@ -60,8 +60,8 @@ class AuthControllerTest {
 
     @Test
     void invalidLoginRetainsTheApiErrorShape() throws Exception {
-        when(authService.login(any(), any()))
-                .thenThrow(new ApiException(org.springframework.http.HttpStatus.UNAUTHORIZED,
+        when(autenticacionService.iniciarSesion(any(), any()))
+                .thenThrow(new ApiException(HttpStatus.UNAUTHORIZED,
                         "Email o contraseña incorrectos"));
 
         mockMvc.perform(post("/api/auth/login.php")

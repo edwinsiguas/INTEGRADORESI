@@ -1,12 +1,13 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.IAuditoriaService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 
 import java.util.List;
 import java.util.Map;
@@ -25,17 +26,17 @@ class ActionLogControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ActionLogService actionLogService;
+    private IAuditoriaService auditoriaService;
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void listsActionLogs() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
-        when(actionLogService.listLogs(any()))
+        when(auditoriaService.listarHistorial(any()))
                 .thenReturn(Map.of(
                         "data", List.of(Map.of("id", 1, "accion", "crear", "entidad", "vehiculo")),
                         "pagination", Map.of("total", 1, "page", 1, "pages", 1)));

@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pe.marcona.mtc.dao.IVehiculoMutacionDao;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuditService;
+import pe.marcona.mtc.service.IAuditoriaService;
 import pe.marcona.mtc.service.IVehiculoMutacionService;
 
 import javax.imageio.IIOImage;
@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * Implementación de la lógica de negocio para mutaciones de vehículos (CQRS - Command).
- * Aplica Inversión de Dependencias (DIP) inyectando {@link IVehiculoMutacionDao}.
+ * Aplica Inversión de Dependencias (DIP) inyectando {@link IVehiculoMutacionDao} e {@link IAuditoriaService}.
  */
 @Service
 public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
@@ -43,15 +43,15 @@ public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
     private static final Set<String> EXTENSIONES_PERMITIDAS = Set.of("jpg", "jpeg", "png", "webp");
 
     private final IVehiculoMutacionDao vehiculoMutacionDao;
-    private final AuditService auditService;
+    private final IAuditoriaService auditoriaService;
     private final Path raizSubidas;
 
     public VehiculoMutacionServiceImpl(
             IVehiculoMutacionDao vehiculoMutacionDao,
-            AuditService auditService,
+            IAuditoriaService auditoriaService,
             @Value("${app.uploads-dir:uploads}") String uploadsDir) {
         this.vehiculoMutacionDao = Preconditions.checkNotNull(vehiculoMutacionDao, "El DAO de mutación de vehículos no puede ser nulo");
-        this.auditService = Preconditions.checkNotNull(auditService, "El servicio de auditoría no puede ser nulo");
+        this.auditoriaService = Preconditions.checkNotNull(auditoriaService, "El servicio de auditoría no puede ser nulo");
         this.raizSubidas = Path.of(uploadsDir).toAbsolutePath().normalize();
     }
 
@@ -95,7 +95,7 @@ public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
 
         List<String> imagenesAlmacenadas = procesarYGuardarImagenes(idVehiculo, archivos, 0);
 
-        auditService.record(idActor, "crear", "vehiculo", idVehiculo, "Vehículo creado: " + placa, solicitud);
+        auditoriaService.registrarAccion(idActor, "crear", "vehiculo", idVehiculo, "Vehículo creado: " + placa, solicitud);
         log.info("Vehículo creado exitosamente: id={}, placa={}", idVehiculo, placa);
 
         return Map.of(
@@ -186,7 +186,7 @@ public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
         clausulas.add("updated_at = NOW()");
         vehiculoMutacionDao.actualizarVehiculo(idVehiculo, clausulas, parametros);
 
-        auditService.record(idActor, "actualizar", "vehiculo", idVehiculo, "Vehículo actualizado", solicitud);
+        auditoriaService.registrarAccion(idActor, "actualizar", "vehiculo", idVehiculo, "Vehículo actualizado", solicitud);
         log.info("Vehículo actualizado: id={}", idVehiculo);
 
         return vehiculoMutacionDao.obtenerPorId(idVehiculo)
@@ -220,7 +220,7 @@ public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
 
         List<String> almacenadas = procesarYGuardarImagenes(idVehiculo, archivos, totalImagenesActual);
 
-        auditService.record(idActor, "subir_imagen_vehiculo", "vehiculo", idVehiculo,
+        auditoriaService.registrarAccion(idActor, "subir_imagen_vehiculo", "vehiculo", idVehiculo,
                 "Imágenes cargadas para vehículo ID " + idVehiculo, solicitud);
 
         log.info("Imágenes subidas para vehículo id={}: {}", idVehiculo, almacenadas.size());
@@ -240,7 +240,7 @@ public class VehiculoMutacionServiceImpl implements IVehiculoMutacionService {
         String nuevoEstado = "activo".equals(vehiculo.get("estado")) ? "inactivo" : "activo";
         vehiculoMutacionDao.alternarEstado(idVehiculo, nuevoEstado);
 
-        auditService.record(idActor, "cambio_estado", "vehiculo", idVehiculo,
+        auditoriaService.registrarAccion(idActor, "cambio_estado", "vehiculo", idVehiculo,
                 "Estado de vehículo '" + vehiculo.get("placa") + "' cambiado a " + nuevoEstado, solicitud);
 
         log.info("Estado de vehículo alternado: id={}, nuevoEstado={}", idVehiculo, nuevoEstado);

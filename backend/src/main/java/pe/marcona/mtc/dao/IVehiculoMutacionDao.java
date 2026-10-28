@@ -28,3 +28,4 @@ public interface IVehiculoMutacionDao {
 
     void insertarImagen(long idVehiculo, String nombreOriginal, String rutaRelativa, long tamanio, int orden);
 }
+

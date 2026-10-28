@@ -121,3 +121,4 @@ public class VehiculoMutacionDaoImpl implements IVehiculoMutacionDao {
         jdbcTemplate.update(sql, idVehiculo, nombreOriginal, rutaRelativa, tamanio, orden);
     }
 }
+

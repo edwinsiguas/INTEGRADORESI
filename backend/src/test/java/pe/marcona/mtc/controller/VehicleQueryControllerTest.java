@@ -7,7 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAutenticacionService;
 import pe.marcona.mtc.service.IVehiculoConsultaService;
 import pe.marcona.mtc.service.IVehiculoMutacionService;
 
@@ -34,11 +34,11 @@ class VehicleQueryControllerTest {
     private IVehiculoMutacionService vehiculoMutacionService;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @Test
     void listAllowsOperatorAndReturnsVehiclePagination() throws Exception {
-        when(authService.requireUserInRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(HttpServletRequest.class), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 2, "role", "operador"));
         when(vehiculoConsultaService.listar(any())).thenReturn(Map.of(
                 "data", java.util.List.of(Map.of("id", 5, "placa", "ABC-123")),
@@ -52,7 +52,7 @@ class VehicleQueryControllerTest {
 
     @Test
     void statusToggleRemainsAdminOnlyAndReturnsLegacyPayload() throws Exception {
-        when(authService.requireUser(any(HttpServletRequest.class), eq("admin")))
+        when(autenticacionService.requerirUsuario(any(HttpServletRequest.class), eq("admin")))
                 .thenReturn(Map.of("id", 2, "role", "admin"));
         when(vehiculoMutacionService.alternarEstado(eq(5L), any(HttpServletRequest.class), eq(2L)))
                 .thenReturn(Map.of("id", 5, "estado", "inactivo"));

@@ -4,7 +4,9 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.impl.ReporteServiceImpl;
 
 import java.io.ByteArrayInputStream;
 
@@ -15,6 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReportController.class)
+@Import(ReporteServiceImpl.class)
 class ReportControllerTest {
     @Autowired
     private MockMvc mockMvc;

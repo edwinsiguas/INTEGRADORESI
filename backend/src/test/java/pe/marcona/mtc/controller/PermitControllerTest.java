@@ -6,10 +6,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pe.marcona.mtc.service.AuthService;
-import pe.marcona.mtc.service.CirculationService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ICirculacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 import pe.marcona.mtc.service.IPermisoService;
-import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.List;
 import java.util.Map;
@@ -30,15 +30,15 @@ class PermitControllerTest {
     @MockitoBean
     private IPermisoService permisoService;
     @MockitoBean
-    private CirculationService circulationService;
+    private ICirculacionService circulacionService;
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void listsPermitsForOperativeStaff() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "operador"));
         when(permisoService.listarPermisos(any())).thenReturn(Map.of(
                 "data", List.of(Map.of("id", 10, "numero_permiso", "PERM-2026-00001")),
@@ -52,7 +52,7 @@ class PermitControllerTest {
 
     @Test
     void getsPermitById() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
         when(permisoService.obtenerPermisoPorId(10L)).thenReturn(Map.of(
                 "id", 10L,
@@ -67,7 +67,7 @@ class PermitControllerTest {
 
     @Test
     void generatesPermit() throws Exception {
-        when(authService.requireUserInRoles(any(), eq(Set.of("admin", "operador"))))
+        when(autenticacionService.requerirUsuarioEnRoles(any(), eq(Set.of("admin", "operador"))))
                 .thenReturn(Map.of("id", 1L, "role", "operador"));
         when(permisoService.generarPermiso(any(), eq(1L), any())).thenReturn(Map.of(
                 "id", 15L,
@@ -83,7 +83,7 @@ class PermitControllerTest {
 
     @Test
     void revokesPermit() throws Exception {
-        when(authService.requireUser(any(), eq("admin")))
+        when(autenticacionService.requerirUsuario(any(), eq("admin")))
                 .thenReturn(Map.of("id", 1L, "role", "admin"));
         when(permisoService.revocarPermiso(eq(15L), any(), eq(1L), any())).thenReturn(true);
 

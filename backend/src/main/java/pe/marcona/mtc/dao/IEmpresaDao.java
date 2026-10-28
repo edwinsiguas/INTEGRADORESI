@@ -27,3 +27,4 @@ public interface IEmpresaDao {
 
     int actualizarEstado(long id, String nuevoEstado);
 }
+

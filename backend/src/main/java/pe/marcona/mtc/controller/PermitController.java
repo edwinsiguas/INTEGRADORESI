@@ -5,10 +5,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pe.marcona.mtc.dto.ApiResponse;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuthService;
-import pe.marcona.mtc.service.CirculationService;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.ICirculacionService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 import pe.marcona.mtc.service.IPermisoService;
-import pe.marcona.mtc.service.RateLimitService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,34 +17,34 @@ import java.util.Set;
 
 /**
  * Adaptador REST para la consulta, emisión, revocación y renovación de permisos.
- * Inyecta la abstracción {@link IPermisoService} respetando Inversión de Dependencias (DIP).
+ * Inyecta las abstracciones {@link IPermisoService}, {@link ICirculacionService}, {@link IAutenticacionService} e {@link ILimitePeticionesService} (DIP).
  */
 @RestController
 @RequestMapping("/api/permits")
 public class PermitController {
 
     private final IPermisoService permisoService;
-    private final CirculationService circulationService;
-    private final AuthService authService;
-    private final RateLimitService rateLimitService;
+    private final ICirculacionService circulacionService;
+    private final IAutenticacionService autenticacionService;
+    private final ILimitePeticionesService limitePeticionesService;
 
     public PermitController(
             IPermisoService permisoService,
-            CirculationService circulationService,
-            AuthService authService,
-            RateLimitService rateLimitService) {
+            ICirculacionService circulacionService,
+            IAutenticacionService autenticacionService,
+            ILimitePeticionesService limitePeticionesService) {
         this.permisoService = permisoService;
-        this.circulationService = circulationService;
-        this.authService = authService;
-        this.rateLimitService = rateLimitService;
+        this.circulacionService = circulacionService;
+        this.autenticacionService = autenticacionService;
+        this.limitePeticionesService = limitePeticionesService;
     }
 
     @GetMapping
     public ApiResponse<Map<String, Object>> list(
             @RequestParam Map<String, String> query,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         return ApiResponse.success(permisoService.listarPermisos(query), null);
     }
 
@@ -52,8 +52,8 @@ public class PermitController {
     public ApiResponse<Map<String, Object>> get(
             @PathVariable long id,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         return ApiResponse.success(permisoService.obtenerPermisoPorId(id), null);
     }
 
@@ -62,8 +62,8 @@ public class PermitController {
     public ApiResponse<Map<String, Object>> generate(
             @RequestBody(required = false) Map<String, Object> body,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         long userId = ((Number) user.get("id")).longValue();
         Map<String, Object> input = body == null ? Map.of() : body;
         return ApiResponse.success(
@@ -76,8 +76,8 @@ public class PermitController {
             @PathVariable long id,
             @RequestBody(required = false) Map<String, Object> body,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUser(request, "admin");
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuario(request, "admin");
         long userId = ((Number) user.get("id")).longValue();
         String motivo = body == null ? null : (String) body.get("motivo");
 
@@ -94,8 +94,8 @@ public class PermitController {
             @PathVariable long id,
             @RequestBody(required = false) Map<String, Object> body,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUser(request, "admin");
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuario(request, "admin");
         long userId = ((Number) user.get("id")).longValue();
         Map<String, Object> input = body == null ? Map.of() : body;
 
@@ -109,7 +109,7 @@ public class PermitController {
             @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(required = false) Map<String, String> queryParams,
             HttpServletRequest request) {
-        rateLimitService.check("permit_verify", request.getRemoteAddr(), 60, 60);
+        limitePeticionesService.verificar("permit_verify", request.getRemoteAddr(), 60, 60);
 
         Map<String, Object> payload = new HashMap<>();
         if (queryParams != null) {
@@ -119,7 +119,7 @@ public class PermitController {
             payload.putAll(body);
         }
 
-        Map<String, Object> result = circulationService.validate(payload);
+        Map<String, Object> result = circulacionService.validar(payload);
         return ApiResponse.success(result, String.valueOf(result.get("razon")));
     }
 
@@ -127,7 +127,7 @@ public class PermitController {
     public ApiResponse<List<Map<String, Object>>> vehicleImages(
             @PathVariable long id,
             HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
         if (id <= 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "vehicle_id inválido");
         }
@@ -136,8 +136,8 @@ public class PermitController {
 
     @PostMapping("/expire")
     public ApiResponse<Map<String, Object>> markExpired(HttpServletRequest request) {
-        rateLimitService.check("api_general", request.getRemoteAddr(), 120, 60);
-        Map<String, Object> user = authService.requireUser(request, "admin");
+        limitePeticionesService.verificar("api_general", request.getRemoteAddr(), 120, 60);
+        Map<String, Object> user = autenticacionService.requerirUsuario(request, "admin");
         long userId = ((Number) user.get("id")).longValue();
 
         List<Long> expired = permisoService.marcarExpirados(userId, request);

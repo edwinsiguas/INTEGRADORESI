@@ -1,12 +1,13 @@
 package pe.marcona.mtc.controller;
 
-import pe.marcona.mtc.service.*;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import pe.marcona.mtc.service.IAutenticacionService;
+import pe.marcona.mtc.service.IEstadisticasService;
+import pe.marcona.mtc.service.ILimitePeticionesService;
 
 import java.util.Map;
 
@@ -21,17 +22,17 @@ class StatisticsControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private StatisticsService statisticsService;
+    private IEstadisticasService estadisticasService;
 
     @MockitoBean
-    private AuthService authService;
+    private IAutenticacionService autenticacionService;
 
     @MockitoBean
-    private RateLimitService rateLimitService;
+    private ILimitePeticionesService limitePeticionesService;
 
     @Test
     void dashboardKeepsItsSuccessEnvelopeAndDashboardFields() throws Exception {
-        when(statisticsService.dashboard()).thenReturn(Map.of(
+        when(estadisticasService.obtenerDashboard()).thenReturn(Map.of(
                 "vehicles", 4,
                 "companies", 2,
                 "drivers", 3,

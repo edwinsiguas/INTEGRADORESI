@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import pe.marcona.mtc.dto.ApiResponse;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuthService;
+import pe.marcona.mtc.service.IAutenticacionService;
 import pe.marcona.mtc.service.IVehiculoConsultaService;
 import pe.marcona.mtc.service.IVehiculoMutacionService;
 
@@ -14,7 +14,7 @@ import java.util.Set;
 
 /**
  * Adaptador REST para consultas y operaciones sobre vehículos.
- * Inyecta {@link IVehiculoConsultaService} para lectura estricta e {@link IVehiculoMutacionService} para cambio de estado.
+ * Inyecta {@link IVehiculoConsultaService} para lectura estricta, {@link IVehiculoMutacionService} para mutación e {@link IAutenticacionService}.
  */
 @RestController
 @RequestMapping("/api/vehicles")
@@ -22,21 +22,21 @@ public class VehicleQueryController {
 
     private final IVehiculoConsultaService vehiculoConsultaService;
     private final IVehiculoMutacionService vehiculoMutacionService;
-    private final AuthService authService;
+    private final IAutenticacionService autenticacionService;
 
     public VehicleQueryController(
             IVehiculoConsultaService vehiculoConsultaService,
             IVehiculoMutacionService vehiculoMutacionService,
-            AuthService authService) {
+            IAutenticacionService autenticacionService) {
         this.vehiculoConsultaService = vehiculoConsultaService;
         this.vehiculoMutacionService = vehiculoMutacionService;
-        this.authService = authService;
+        this.autenticacionService = autenticacionService;
     }
 
     @GetMapping("/list.php")
     public ApiResponse<Map<String, Object>> list(
             @RequestParam Map<String, String> query, HttpServletRequest request) {
-        authService.requireUserInRoles(request, Set.of("admin", "operador"));
+        autenticacionService.requerirUsuarioEnRoles(request, Set.of("admin", "operador"));
         return ApiResponse.success(vehiculoConsultaService.listar(query), null);
     }
 
@@ -45,7 +45,7 @@ public class VehicleQueryController {
             @RequestBody(required = false) Map<String, Object> body,
             @RequestParam(required = false) String id,
             HttpServletRequest request) {
-        Map<String, Object> actor = authService.requireUser(request, "admin");
+        Map<String, Object> actor = autenticacionService.requerirUsuario(request, "admin");
         Object requestedId = body != null && body.get("id") != null ? body.get("id") : id;
         long vehicleId = parseId(requestedId);
         long actorId = ((Number) actor.get("id")).longValue();

@@ -33,3 +33,4 @@ public interface IVehiculoMutacionService {
      */
     Map<String, Object> alternarEstado(long idVehiculo, HttpServletRequest solicitud, long idActor);
 }
+

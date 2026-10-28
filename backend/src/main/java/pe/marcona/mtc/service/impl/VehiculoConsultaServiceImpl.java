@@ -96,3 +96,4 @@ public class VehiculoConsultaServiceImpl implements IVehiculoConsultaService {
         return valor != null && !valor.isBlank() && !"0".equals(valor);
     }
 }
+

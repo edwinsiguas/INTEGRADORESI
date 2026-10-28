@@ -1,17 +1,18 @@
 package pe.marcona.mtc.service;
 
 import org.junit.jupiter.api.Test;
+import pe.marcona.mtc.service.impl.CodigoQrServiceImpl;
 
 import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class QrCodeServiceTest {
-    private final QrCodeService qrCodeService = new QrCodeService();
+class CodigoQrServiceTest {
+    private final ICodigoQrService codigoQrService = new CodigoQrServiceImpl();
 
     @Test
     void generatesValidBase64PngFromText() {
-        String base64 = qrCodeService.generateBase64Qr("https://transporte.munimarcona.gob.pe/tuc/PERM-2026-00001");
+        String base64 = codigoQrService.generarQrBase64("https://transporte.munimarcona.gob.pe/tuc/PERM-2026-00001");
         assertThat(base64).isNotBlank();
 
         byte[] decoded = Base64.getDecoder().decode(base64);
@@ -25,7 +26,7 @@ class QrCodeServiceTest {
 
     @Test
     void returnsNullForBlankInput() {
-        assertThat(qrCodeService.generateBase64Qr("")).isNull();
-        assertThat(qrCodeService.generateBase64Qr(null)).isNull();
+        assertThat(codigoQrService.generarQrBase64("")).isNull();
+        assertThat(codigoQrService.generarQrBase64(null)).isNull();
     }
 }

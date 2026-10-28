@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.marcona.mtc.dao.IPermisoDao;
 import pe.marcona.mtc.exception.ApiException;
-import pe.marcona.mtc.service.AuditService;
+import pe.marcona.mtc.service.IAuditoriaService;
+import pe.marcona.mtc.service.ICodigoQrService;
 import pe.marcona.mtc.service.IPermisoService;
-import pe.marcona.mtc.service.QrCodeService;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -23,7 +23,7 @@ import java.util.*;
 
 /**
  * Implementación de la lógica de negocio para la emisión, revocación y renovación de permisos.
- * Aplica Inversión de Dependencias (DIP) inyectando {@link IPermisoDao}.
+ * Aplica Inversión de Dependencias (DIP) inyectando {@link IPermisoDao}, {@link ICodigoQrService} e {@link IAuditoriaService}.
  */
 @Service
 public class PermisoServiceImpl implements IPermisoService {
@@ -34,20 +34,20 @@ public class PermisoServiceImpl implements IPermisoService {
             "libre_transito", "ruta_fija", "carga", "especial");
 
     private final IPermisoDao permisoDao;
-    private final QrCodeService qrCodeService;
-    private final AuditService auditService;
+    private final ICodigoQrService codigoQrService;
+    private final IAuditoriaService auditoriaService;
     private final String appUrl;
     private final String apiUrl;
 
     public PermisoServiceImpl(
             IPermisoDao permisoDao,
-            QrCodeService qrCodeService,
-            AuditService auditService,
+            ICodigoQrService codigoQrService,
+            IAuditoriaService auditoriaService,
             @Value("${APP_URL:http://localhost:3000}") String appUrl,
             @Value("${app.api-url:http://localhost/api}") String apiUrl) {
         this.permisoDao = Preconditions.checkNotNull(permisoDao, "El DAO de permisos no puede ser nulo");
-        this.qrCodeService = Preconditions.checkNotNull(qrCodeService, "El servicio de códigos QR no puede ser nulo");
-        this.auditService = Preconditions.checkNotNull(auditService, "El servicio de auditoría no puede ser nulo");
+        this.codigoQrService = Preconditions.checkNotNull(codigoQrService, "El servicio de códigos QR no puede ser nulo");
+        this.auditoriaService = Preconditions.checkNotNull(auditoriaService, "El servicio de auditoría no puede ser nulo");
         this.appUrl = (appUrl == null ? "http://localhost:3000" : appUrl).replaceAll("/+$", "");
         this.apiUrl = (apiUrl == null ? "http://localhost/api" : apiUrl).replaceAll("/+$", "");
     }
@@ -144,7 +144,7 @@ public class PermisoServiceImpl implements IPermisoService {
 
         String numeroPermiso = generarSiguienteNumeroPermiso();
         String datosQr = appUrl + "/tuc/" + numeroPermiso;
-        String qrBase64 = qrCodeService.generateBase64Qr(datosQr);
+        String qrBase64 = codigoQrService.generarQrBase64(datosQr);
 
         String observaciones = texto(datosEntrada.get("observaciones"));
         String numeroRecibo = textoOpcional(datosEntrada.get("numero_recibo"));
@@ -156,7 +156,7 @@ public class PermisoServiceImpl implements IPermisoService {
                 observaciones, qrBase64, idActor,
                 numeroRecibo, montoPagado);
 
-        auditService.record(idActor, "generar_permiso", "permiso", idPermisoGenerado,
+        auditoriaService.registrarAccion(idActor, "generar_permiso", "permiso", idPermisoGenerado,
                 "Permiso generado: " + numeroPermiso, solicitud);
 
         log.info("Permiso emitido exitosamente: id={}, numero={}", idPermisoGenerado, numeroPermiso);
@@ -170,7 +170,7 @@ public class PermisoServiceImpl implements IPermisoService {
 
         boolean revocado = permisoDao.revocarPermiso(idPermiso, motivoLimpio);
         if (revocado) {
-            auditService.record(idActor, "revocar_permiso", "permiso", idPermiso, motivoLimpio, solicitud);
+            auditoriaService.registrarAccion(idActor, "revocar_permiso", "permiso", idPermiso, motivoLimpio, solicitud);
             log.info("Permiso revocado: id={}, motivo={}", idPermiso, motivoLimpio);
             return true;
         }
@@ -227,7 +227,7 @@ public class PermisoServiceImpl implements IPermisoService {
         LocalDate nuevoVencimiento = LocalDate.now().plusYears(1);
         String numeroPermiso = generarSiguienteNumeroPermiso();
         String datosQr = appUrl + "/tuc/" + numeroPermiso;
-        String qrBase64 = qrCodeService.generateBase64Qr(datosQr);
+        String qrBase64 = codigoQrService.generarQrBase64(datosQr);
 
         String obsInput = texto(datosEntrada.get("observaciones"));
         final String observacionesLimpias = obsInput.isBlank()
@@ -243,7 +243,7 @@ public class PermisoServiceImpl implements IPermisoService {
                 observacionesLimpias, qrBase64, idActor,
                 numeroRecibo, montoPagado);
 
-        auditService.record(idActor, "renovar_permiso", "permiso", idNuevoPermiso,
+        auditoriaService.registrarAccion(idActor, "renovar_permiso", "permiso", idNuevoPermiso,
                 "Permiso renovado a partir del ID " + idPermisoAntiguo, solicitud);
 
         log.info("Permiso renovado: idAntiguo={}, idNuevo={}", idPermisoAntiguo, idNuevoPermiso);
@@ -273,7 +273,7 @@ public class PermisoServiceImpl implements IPermisoService {
 
         for (Long id : idsExpirados) {
             permisoDao.marcarComoVencido(id);
-            auditService.record(idActor, "vencimiento_automatico", "permiso", id,
+            auditoriaService.registrarAccion(idActor, "vencimiento_automatico", "permiso", id,
                     "Permiso vencido automáticamente por fecha de vencimiento", solicitud);
         }
 
@@ -361,4 +361,3 @@ public class PermisoServiceImpl implements IPermisoService {
         return s.isBlank() ? null : s;
     }
 }
-
