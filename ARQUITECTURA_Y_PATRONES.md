@@ -184,3 +184,4 @@ pe.marcona.mtc.
    * Sufijo `Impl` para clases de implementación en subcarpeta `impl/`: `UsuarioServiceImpl`, `PermisoDaoImpl`.
    * Verbos y variables de negocio en español formal: `crearUsuario()`, `obtenerPorId()`, `actualizarPermiso()`, `numeroPlaca`, `fechaVigencia`.
    * Nombres de tablas y columnas de base de datos en español/estándar existente: `users`, `vehicles`, `permisos`, `action_logs`.
+

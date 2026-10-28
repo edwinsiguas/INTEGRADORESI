@@ -93,3 +93,4 @@ limitePeticionesService.verificar("login", solicitud.getRemoteAddr(), 5, 900);
 
 * **Comportamiento:** Si una misma IP realiza más de `5` peticiones para la acción `login` en una ventana de `900` segundos (15 minutos), el servicio interrumpe la ejecución arrojando una excepción HTTP `429 Too Many Requests` indicando con precisión cuántos minutos debe esperar el usuario antes de reintentar.
 * **Persistencia Eficiente:** La tabla `rate_limits` almacena únicamente tuplas de `(ip, action, created_at)` indexadas temporalmente, asegurando lecturas en milisegundos.
+

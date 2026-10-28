@@ -134,3 +134,4 @@ Para mantener un historial de Git limpio y trazable, el equipo sigue el estánda
 | `test` | Incorporación o ajuste de pruebas unitarias | `test(service): agregar pruebas de verificacion de codigo QR` |
 | `docs` | Modificación de documentación o manuales | `docs: redactar guia de arquitectura y despliegue local` |
 | `chore` | Tareas de mantenimiento, dependencias o configuración | `chore(deps): actualizar jacoco-maven-plugin a v0.8.12` |
+
