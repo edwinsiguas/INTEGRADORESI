@@ -1,183 +1,178 @@
-# Guía Rápida de Ejecución — TRANSIGOVAI
-### Sistema Integral de Gestión y Fiscalización de Permisos de Transporte (MTC / Municipalidad de Marcona)
+# Guía de Ejecución y Puesta en Marcha Local
+### Manual de Despliegue para Entornos de Desarrollo
 
-Esta guía te explica paso a paso cómo poner en marcha todo el sistema (**Base de Datos + phpMyAdmin con Docker**, **Backend en Java Spring Boot** y **Frontend en React**) tanto en **Linux** como en **Windows**.
-
----
-
-## 📌 Arquitectura de Ejecución
-
-El sistema funciona con 3 componentes desacoplados:
-1. **Base de Datos & Gestor Web (Docker):**
-   - **MySQL 8.0** en el puerto `3306` (Base de datos: `marcona_permisos`).
-   - **phpMyAdmin** en el puerto `8080` (Interfaz web para ver y administrar tablas).
-   - *Se autoinicializa con todas las tablas y el usuario administrador.*
-2. **Backend (Java 21 LTS + Spring Boot 3.5):**
-   - API RESTful en el puerto `8081` (`http://localhost:8081/api`).
-3. **Frontend (React 19 + TypeScript + Vite + TailwindCSS):**
-   - Aplicación web en el puerto `3000` (`http://localhost:3000`).
+Esta guía describe el procedimiento técnico detallado para instalar dependencias, inicializar la base de datos, compilar y ejecutar tanto el **Backend (Java Spring Boot)** como el **Frontend (React + Vite)** en estaciones de trabajo locales bajo un esquema compatible con **XAMPP**.
 
 ---
 
-## 🐧 Guía para LINUX (Ubuntu / Debian / Mint)
+## 1. Prerrequisitos del Sistema
 
-### 1. Requisitos Previos
-Verifica que tengas instaladas las herramientas principales:
-```bash
-docker --version
-java -version    # Debe ser OpenJDK 21 o superior
-mvn -version     # Apache Maven 3.9+
-node -v          # Node.js 18 o superior
-npm -v           # Gestor de paquetes de Node
-```
-*(Si no tienes docker-compose: `sudo apt install -y docker-compose-v2` y agrega tu usuario con `sudo usermod -aG docker $USER`).*
+Antes de iniciar, asegúrate de contar con el siguiente software instalado en tu equipo:
 
----
-
-### 2. Paso a Paso de Ejecución en Linux
-
-#### Paso A: Levantar la Base de Datos con Docker
-Desde la raíz del proyecto (`TRANSIGOVAI`):
-```bash
-docker compose up -d
-```
-> *(Usa `sudo docker compose up -d` si tu usuario aún no reinició sesión tras añadirse al grupo docker).*
->
-> **¿Qué hace automáticamente?**
-> - Descarga e inicia MySQL 8 y phpMyAdmin.
-> - Ejecuta `scripts/setup.sql` (crea todas las tablas).
-> - Ejecuta `scripts/init-admin.sql` (crea el usuario `admin@marcona.pe` con su contraseña encriptada).
-> - Puedes ingresar a **`http://localhost:8080`** y ver tus tablas en phpMyAdmin inmediatamente.
-
-#### Paso B: Iniciar el Backend Java Spring Boot (Terminal 1)
-Abre tu primera terminal y ejecuta:
-```bash
-cd java-service
-mvn spring-boot:run
-```
-Verás el banner de Spring Boot y el mensaje final:
-`Started MtcJavaApplication in X.XXX seconds (process running for X.XXX)`
-- Comprueba que responde en: **`http://localhost:8081/api/health`**
-
-#### Paso C: Iniciar el Frontend React (Terminal 2)
-Abre una segunda terminal y ejecuta:
-```bash
-npm install
-npm run dev
-```
-Te mostrará en verde:
-`➜  Local:   http://localhost:3000/`
-
----
-
-## 🪟 Guía para WINDOWS (Windows 10 / 11)
-
-### 1. Requisitos Previos en Windows
-1. **Docker Desktop para Windows:**
-   - Descárgalo e instálalo desde [docker.com](https://www.docker.com/products/docker-desktop/).
-   - Asegúrate de que Docker Desktop esté abierto y con el ícono en verde (Running).
-2. **JDK 21 LTS (Java Development Kit):**
-   - Recomendado: [Eclipse Temurin 21](https://adoptium.net/) u Oracle JDK 21+.
-   - Asegúrate de marcar la casilla *"Set JAVA_HOME"* durante la instalación.
-3. **Apache Maven:**
-   - Descárgalo desde [maven.apache.org](https://maven.apache.org/download.cgi) y agrega su carpeta `bin` a las Variables de Entorno (PATH).
-4. **Node.js (LTS):**
-   - Descárgalo desde [nodejs.org](https://nodejs.org/) (incluye `npm`).
-
----
-
-### 2. Paso a Paso de Ejecución en Windows (PowerShell o CMD)
-
-#### Paso A: Levantar la Base de Datos con Docker Desktop
-Abre PowerShell o CMD en la carpeta del proyecto y ejecuta:
-```powershell
-docker compose up -d
-```
-> Esto iniciará los contenedores de MySQL 8 y phpMyAdmin. Puedes verificarlo abriendo en tu navegador:
-> 👉 **`http://localhost:8080`**
-
-#### Paso B: Iniciar el Backend Java Spring Boot (Terminal 1)
-En tu primera ventana de PowerShell o CMD:
-```powershell
-cd java-service
-mvn spring-boot:run
-```
-Espera a que muestre:
-`Started MtcJavaApplication in ... seconds`
-
-#### Paso C: Iniciar el Frontend React (Terminal 2)
-En una segunda ventana de PowerShell o CMD:
-```powershell
-npm install
-npm run dev
-```
-Abre en tu navegador:
-👉 **`http://localhost:3000`**
-
----
-
-## 🔑 Credenciales de Acceso al Sistema
-
-Una vez abierta la aplicación en `http://localhost:3000`, inicia sesión con:
-
-| Campo | Valor |
-|---|---|
-| **Correo Electrónico** | `admin@marcona.pe` |
-| **Contraseña** | `Admin123*` |
-| **Rol asignado** | `admin` (Acceso completo a todos los módulos) |
-
----
-
-## 🌐 Enlaces Rápidos del Entorno Local
-
-| Servicio | URL Local | Descripción |
+| Componente | Versión Mínima Recomendada | Propósito |
 |---|---|---|
-| **Frontend Web** | [http://localhost:3000](http://localhost:3000) | Aplicación React (MTC Marcona) |
-| **phpMyAdmin** | [http://localhost:8080](http://localhost:8080) | Panel gráfico para explorar la Base de Datos MySQL |
-| **API Backend** | [http://localhost:8081/api](http://localhost:8081/api) | Endpoint raíz de los servicios REST |
-| **Health Check** | [http://localhost:8081/api/health](http://localhost:8081/api/health) | Diagnóstico de salud del servicio Java |
+| **Java JDK** | Java 21 LTS (Eclipse Temurin / OpenJDK) | Entorno de ejecución y compilación del backend |
+| **Node.js** | Node.js v20.x o v24.x LTS (con npm 10+) | Entorno de ejecución para dependencias y bundling del frontend |
+| **XAMPP** | Versión 8.0 o superior (con MySQL y Apache) | Servidor de base de datos relacional local |
+| **Apache Maven** | Versión 3.9+ (o utilizar el Maven integrado en `backend/tools`) | Gestor de dependencias y empaquetado Java |
+| **Docker Desktop** | Opcional (Requerido solo para SonarQube) | Auditoría de calidad de código y análisis estático |
 
 ---
 
-## 🛠️ Comandos Útiles de Docker
+## 2. Paso 1: Preparación de la Base de Datos (MySQL vía XAMPP)
 
-- **Ver el estado de los contenedores:**
-  ```bash
-  docker ps
-  ```
-- **Ver los logs de la base de datos MySQL:**
-  ```bash
-  docker logs transigovai-db
-  ```
-- **Detener los contenedores sin borrar los datos:**
-  ```bash
-  docker compose stop
-  ```
-- **Volver a encenderlos:**
-  ```bash
-  docker compose start
-  ```
-- **Apagar y eliminar contenedores (manteniendo los datos guardados):**
-  ```bash
-  docker compose down
-  ```
-- **Reiniciar la base de datos desde cero (borrar datos para re-ejecutar `setup.sql`):**
-  ```bash
-  docker compose down -v
-  docker compose up -d
-  ```
+El sistema utiliza la base de datos `marcona_permisos` en el puerto estándar `3306`.
+
+### A. Encendido de Servicios
+1. Abre el panel de control **XAMPP Control Panel**.
+2. Presiona el botón **Start** junto al módulo **Apache**.
+3. Presiona el botón **Start** junto al módulo **MySQL**.
+4. Ambos módulos deben mostrarse con fondo verde y los puertos asignados (`80`, `443` para Apache y `3306` para MySQL).
+
+### B. Inicialización del Esquema y Credenciales
+
+Tienes dos alternativas para cargar la base de datos:
+
+#### Opción 1: Ejecución Automatizada en 1 Clic (Recomendada para Windows)
+Navega a la carpeta `infraestructura/scripts/` y haz doble clic en el archivo:
+```text
+infraestructura/scripts/IMPORTAR_BD_XAMPP.bat
+```
+Este script realiza las siguientes acciones de forma desatendida:
+1. Comprueba la conexión activa con `C:\xampp\mysql\bin\mysql.exe`.
+2. Crea la base de datos `marcona_permisos` con juego de caracteres `utf8mb4`.
+3. Ejecuta `setup.sql` creando todas las tablas, índices y llaves foráneas.
+4. Ejecuta `init-admin.sql` creando el usuario maestro `admin@marcona.pe` con contraseña encriptada en BCrypt.
+5. Itera y aplica automáticamente los scripts contenidos en `migrations/`.
+
+#### Opción 2: Carga Manual vía phpMyAdmin
+1. Abre tu navegador web e ingresa a: [http://localhost/phpmyadmin/](http://localhost/phpmyadmin/).
+2. Haz clic en **Nueva** en la barra lateral izquierda y crea una base de datos llamada:
+   * **Nombre:** `marcona_permisos`
+   * **Cotejamiento:** `utf8mb4_unicode_ci`
+3. Selecciona la base de datos recién creada y dirígete a la pestaña **Importar**.
+4. Carga y ejecuta los scripts ubicados en `infraestructura/scripts/` en el **orden estricto** siguiente:
+   * **Primero:** `setup.sql` (Estructura base del sistema).
+   * **Segundo:** `init-admin.sql` (Usuario administrador de arranque).
+   * **Tercero:** Todos los archivos `.sql` dentro de `migrations/` en orden cronológico.
 
 ---
 
-## ❓ Solución de Problemas Frecuentes
+## 3. Paso 2: Ejecución del Backend (Java Spring Boot)
 
-1. **Error: `Port 3306 is already in use`**
-   - Tienes otro servicio de MySQL o XAMPP corriendo en tu máquina.
-   - *Solución:* Detén el servicio local de MySQL (`sudo systemctl stop mysql` en Linux o detener MySQL en el panel de XAMPP) antes de ejecutar `docker compose up -d`.
+El backend ya está preconfigurado en `backend/src/main/resources/application.properties` para conectarse a XAMPP en `localhost:3306` con usuario `root` y clave en blanco, exponiendo sus endpoints en el puerto `8080`.
 
-2. **Error: `Port 8081 is already in use`**
-   - Una instancia anterior de Java sigue en ejecución.
-   - *Solución:* Presiona `Ctrl + C` en la terminal de Java o mata el proceso con `fuser -k 8081/tcp` (Linux) o `netstat -ano | findstr 8081` y `taskkill /PID <PID> /F` (Windows).
+### A. Ejecución Rápida en Windows (Script Inteligente)
+Dentro de la carpeta `backend/`, haz doble clic en:
+```text
+backend/INICIAR_JAVA.bat
+```
+*Este script detecta automáticamente tu instalación de Java 21 LTS y utiliza el binario de Maven integrado en `backend/tools/apache-maven-3.9.9`, iniciando la aplicación sin requerir configuración manual de variables de entorno.*
 
-3. **Error en Windows: `execution of scripts is disabled on this system` en PowerShell**
-   - *Solución:* Abre PowerShell como Administrador y ejecuta: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+### B. Ejecución Manual por Línea de Comandos
+Si prefieres usar una terminal (PowerShell, Bash o CMD):
+```bash
+# 1. Navegar a la carpeta del backend
+cd backend
+
+# 2. Levantar la aplicación con Maven
+mvn spring-boot:run
+```
+
+### C. Validación de Arranque
+Cuando el backend haya iniciado correctamente, verás en la consola:
+```text
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.5.3)
+
+... Started Application in X.XXX seconds (process running for X.XXX)
+```
+* **Endpoint de Salud / API:** `http://localhost:8080/api`
+* **Puerto de Escucha:** `8080`
+
+---
+
+## 4. Paso 3: Ejecución del Frontend (React 19 + Vite)
+
+El frontend opera como una Single Page Application moderna sobre Vite, configurada para resolver peticiones API a través de su proxy reverso en el puerto `5173`.
+
+### A. Instalación de Dependencias
+Abre una **nueva ventana de terminal** y ejecuta:
+```bash
+# 1. Navegar a la carpeta del frontend
+cd frontend
+
+# 2. Instalar los paquetes de Node.js (solo necesario la primera vez o tras cambios en package.json)
+npm install
+```
+
+### B. Inicio del Servidor de Desarrollo
+```bash
+# Iniciar servidor de desarrollo con Hot Module Replacement (HMR)
+npm run dev
+```
+
+### C. Validación del Frontend
+La terminal confirmará que el servidor local está activo:
+```text
+  VITE v8.3.4  ready in 250 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
+
+Abre tu navegador en:
+👉 **[http://localhost:5173](http://localhost:5173)**
+
+### D. Resolución de CORS y Proxy Reverso
+* Durante el desarrollo local, Vite intercepta cualquier petición a `/api/*` y la reenvía internamente al backend (`http://localhost:8080`).
+* Adicionalmente, el backend cuenta con [CorsConfiguration.java](file:///backend/src/main/java/pe/marcona/mtc/config/CorsConfiguration.java) autorizando explícitamente los orígenes `http://localhost:5173` y `http://127.0.0.1:5173` con credenciales activas, evitando cualquier bloqueo por políticas de mismo origen en los navegadores.
+
+---
+
+## 5. Paso 4: Inicio de Sesión y Verificación de Flujo
+
+1. Dirígete a `http://localhost:5173`.
+2. Se desplegará la pantalla de autenticación corporativa.
+3. Ingresa las credenciales maestras:
+   * **Correo:** `admin@marcona.pe`
+   * **Contraseña:** `Admin123*`
+4. Al hacer clic en **Iniciar Sesión**, el backend verificará el hash BCrypt, emitirá el token de sesión y el frontend cargará el Dashboard General con las estadísticas del parque automotor.
+
+---
+
+## 6. Paso 5: Auditoría de Calidad Local con SonarQube (Opcional)
+
+Para ejecutar análisis estático de código, detección de vulnerabilidades y verificación de cobertura de pruebas JaCoCo:
+
+### A. Levantar SonarQube en Docker
+Desde la raíz del proyecto, ejecuta:
+```bash
+docker compose -f infraestructura/docker-compose.sonar.yml up -d
+```
+*Espera aproximadamente 60 a 90 segundos a que el contenedor inicialice su motor de Elasticsearch embebido.*
+* **Consola Web de SonarQube:** `http://localhost:9000`
+* **Credenciales por defecto:** Usuario `admin`, Contraseña `admin` (te solicitará cambiar la contraseña en el primer acceso).
+
+### B. Ejecución de Pruebas Unitarias y Generación de Reporte JaCoCo
+Desde la carpeta `backend/`:
+```bash
+cd backend
+mvn clean test
+```
+*Esto ejecutará las pruebas unitarias y generará el archivo de cobertura XML en:*
+`backend/target/site/jacoco/jacoco.xml`.
+
+### C. Envío del Análisis Estático a SonarQube
+Ejecuta el escáner de Sonar apuntando a tu instancia local:
+```bash
+mvn sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin -Dsonar.password=admin
+```
+*(O reemplaza `-Dsonar.login` / `-Dsonar.password` por `-Dsonar.token=TU_TOKEN` si generaste un token en SonarQube).*
+
+Revisa los resultados inmediatamente en `http://localhost:9000/dashboard?id=transigovai-backend`.
