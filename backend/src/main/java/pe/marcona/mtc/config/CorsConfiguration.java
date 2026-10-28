@@ -13,29 +13,39 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 public class CorsConfiguration implements WebMvcConfigurer {
+
     private final String[] origins;
 
     public CorsConfiguration(
             @Value("${CORS_ALLOWED_ORIGINS:}") String configuredOrigins,
             @Value("${APP_ENV:development}") String environment,
-            @Value("${APP_URL:http://localhost:3000}") String appUrl) {
-        if (!configuredOrigins.isBlank()) {
-            origins = Arrays.stream(configuredOrigins.split(",")).map(String::trim)
-                    .filter(origin -> !origin.isEmpty()).toArray(String[]::new);
-        } else if ("production".equalsIgnoreCase(environment)) {
-            origins = new String[] {appUrl};
-        } else {
-            origins = new String[] {
-                    "http://localhost:3000",
-                    "http://127.0.0.1:3000",
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173"
-            };
+            @Value("${APP_URL:http://localhost:5173}") String appUrl) {
+
+        Set<String> originsSet = new LinkedHashSet<>();
+        // Permitir explícitamente los orígenes de desarrollo local (Vite y React)
+        originsSet.add("http://localhost:5173");
+        originsSet.add("http://127.0.0.1:5173");
+        originsSet.add("http://localhost:3000");
+        originsSet.add("http://127.0.0.1:3000");
+
+        if (appUrl != null && !appUrl.isBlank()) {
+            originsSet.add(appUrl.trim());
         }
+
+        if (configuredOrigins != null && !configuredOrigins.isBlank()) {
+            Arrays.stream(configuredOrigins.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isEmpty())
+                    .forEach(originsSet::add);
+        }
+
+        this.origins = originsSet.toArray(String[]::new);
     }
 
     @Value("${app.uploads-dir:uploads}")
@@ -52,9 +62,10 @@ public class CorsConfiguration implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(origins)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
-                .maxAge(86_400);
+                .allowCredentials(true)
+                .maxAge(86400L);
     }
 
     @Bean
@@ -65,7 +76,7 @@ public class CorsConfiguration implements WebMvcConfigurer {
         config.setAllowCredentials(true);
         config.setAllowedOrigins(List.of(origins));
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setMaxAge(86400L);
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);

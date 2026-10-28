@@ -1,5 +1,9 @@
+# Docker Compose (Alternativa Opcional para Entornos Contenedorizados)
+# NOTA: El entorno de desarrollo principal utiliza XAMPP local (MySQL en 3306) y Spring Boot local (8080).
+# Para evitar conflictos con XAMPP y Spring Boot, los puertos externos han sido mapeados a 3307 y 8085.
+
 services:
-  # Base de Datos MySQL 8
+  # Base de Datos MySQL 8 (Mapeada opcionalmente al puerto 3307 del host)
   db:
     image: mysql:8.0
     container_name: transigovai-db
@@ -8,14 +12,14 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
       MYSQL_DATABASE: marcona_permisos
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       # Se autoejecutan al iniciar la base de datos por primera vez:
       - ./scripts/setup.sql:/docker-entrypoint-initdb.d/01-setup.sql:ro
       - ./scripts/init-admin.sql:/docker-entrypoint-initdb.d/02-admin.sql:ro
 
-  # Interfaz gráfica phpMyAdmin
+  # Interfaz gráfica phpMyAdmin (Mapeada opcionalmente al puerto 8085 del host)
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: transigovai-phpmyadmin
@@ -24,7 +28,7 @@ services:
       PMA_HOST: db
       PMA_PORT: 3306
     ports:
-      - "8080:80"
+      - "8085:80"
     depends_on:
       - db
 

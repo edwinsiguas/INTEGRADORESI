@@ -1,7 +1,7 @@
 type ReportValue = string | number | boolean | null
 
 const JAVA_API_URL = (
-  import.meta.env.VITE_JAVA_API_URL || 'http://localhost:8081/api'
+  import.meta.env.VITE_API_URL || import.meta.env.VITE_JAVA_API_URL || 'http://localhost:8080/api'
 ).replace(/\/+$/, '')
 
 export async function generateJavaExcelReport(
@@ -19,7 +19,7 @@ export async function generateJavaExcelReport(
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        'No se pudo conectar con Java Spring Boot. Comprueba que el servicio esté activo en el puerto 8081.',
+        'No se pudo conectar con Java Spring Boot. Comprueba que el servicio esté activo en el puerto 8080.',
       )
     }
     throw error
